@@ -3,6 +3,9 @@ package org.datadryad.dansbagit;
 import org.apache.commons.io.IOUtils;
 
 import java.io.*;
+import java.security.DigestInputStream;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -47,7 +50,10 @@ public class DANSBag
 
         public String description = null;
         public String format = null;
-        public int md5 = -1;
+        public long size = -1;
+        String md5 = null;
+        public String dataFileIdent = null;
+        public String bundle = null;
     }
 
     File zipFile = null;
@@ -92,20 +98,43 @@ public class DANSBag
         // TODO
     }
 
-    public void addBitstream(InputStream is, String format, String description, String dataFileIdent, String bundle)
+    public void addBitstream(InputStream is, String filename, String format, String description, String dataFileIdent, String bundle)
         throws IOException
     {
         // escape the dataFileIdent
-        // TODO
+        String dataFilename = sanitizeFilename(dataFileIdent);
 
-        // get the correct folder for the bitstream
-        String targetDir = this.workingDir.getName() + File.separator + "data" + File.separator + dataFileIdent + File.separator + bundle;
+        // get the correct folder/filename for the bitstream
+        String targetDir = this.workingDir.getAbsolutePath() + File.separator + "data" + File.separator + dataFilename + File.separator + bundle;
+        String filePath = targetDir + File.separator + filename;
+
+        // ensure that the target directory exists
+        (new File(targetDir)).mkdirs();
+
+        // wrap the input stream in something that can get the MD5 as we read it
+        MessageDigest md = null;
+        try
+        {
+            md = MessageDigest.getInstance("MD5");
+        }
+        catch (NoSuchAlgorithmException e)
+        {
+            throw new RuntimeException(e);
+        }
+        DigestInputStream dis = new DigestInputStream(is, md);
 
         // write the input stream to the working directory, in the appropriate folder
-        OutputStream os = new FileOutputStream(targetDir);
-        IOUtils.copy(is, os);
+        OutputStream os = new FileOutputStream(filePath);
+        IOUtils.copy(dis, os);
 
         // add the bitstream information to our internal data structure
+        BagFileReference bfr = new BagFileReference();
+        bfr.md5 = this.digestToString(md);
+        bfr.description = description;
+        bfr.format = format;
+        bfr.size = (new File(filePath)).length();
+        bfr.dataFileIdent = dataFileIdent;
+        bfr.bundle = bundle;
     }
 
     public void setDDM(DDM ddm) {
@@ -118,5 +147,19 @@ public class DANSBag
 
     public void setDIM(DIM dim, String dataFileIdent) {
 
+    }
+
+    private String sanitizeFilename(String inputName) {
+        return inputName.replaceAll("[^a-zA-Z0-9-_\\.]", "_");
+    }
+
+    private String digestToString(MessageDigest md) {
+        byte[] b = md.digest();
+        String result = "";
+        for (int i=0; i < b.length; i++)
+        {
+            result += Integer.toString( ( b[i] & 0xff ) + 0x100, 16).substring( 1 );
+        }
+        return result;
     }
 }
