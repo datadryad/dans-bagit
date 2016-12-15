@@ -69,5 +69,6 @@ public class BagItTest
         // try adding a random set of bytes as a bitstream
         InputStream is = new ByteArrayInputStream("asdklfjqwoie weoifjwoef jwoeifjwefpji".getBytes());
         db.addBitstream(is, "myfile.txt", "text/plain", "some plain text", "10.whatever/ident/1", "ORIGINAL");
+        db.writeToFile();
     }
 }
