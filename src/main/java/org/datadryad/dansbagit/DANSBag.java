@@ -192,6 +192,8 @@ public class DANSBag
             String manifest = "";
             String tagmanifest = "";
 
+            DANSFiles dfs = new DANSFiles();
+
             // write the bitstreams, and gather their metadata for the tag files as we go through
             for (BagFileReference bfr : this.fileRefs)
             {
@@ -199,28 +201,36 @@ public class DANSBag
                 if (bfr.description != null && !"".equals(bfr.description))
                 {
                     descriptions = descriptions + bfr.description + "\t" + bfr.internalPath + "\n";
+                    dfs.addFileMetadata(bfr.internalPath, "dc:description", bfr.description);
                 }
 
                 // update format tag file contents
                 if (bfr.format != null && !"".equals(bfr.format))
                 {
                     formats = formats + bfr.format + "\t" + bfr.internalPath + "\n";
+                    dfs.addFileMetadata(bfr.internalPath, "dc:format", bfr.format);
                 }
 
                 // update size tag file contents
                 if (bfr.size != -1)
                 {
                     sizes = sizes + Long.toString(bfr.size) + "\t" + bfr.internalPath + "\n";
+                    dfs.addFileMetadata(bfr.internalPath, "dcterms:extent", Long.toString(bfr.size));
                 }
 
                 // update the manifest
                 if (bfr.md5 != null && !"".equals(bfr.md5))
                 {
                     manifest = manifest + bfr.md5 + "\t" + bfr.internalPath + "\n";
+                    dfs.addFileMetadata(bfr.internalPath, "premis:messageDigestAlgorithm", "MD5");
+                    dfs.addFileMetadata(bfr.internalPath, "premis:messageDigest", bfr.md5);
                 }
 
                 this.writeToZip(bfr.getFile(), bfr.internalPath, out);
             }
+
+            // write the DANS files.xml document
+            this.writeToZip(dfs.toXML(), "metadata/files.xml", out);
 
             // write the custom tag files
             if (!"".equals(descriptions))
