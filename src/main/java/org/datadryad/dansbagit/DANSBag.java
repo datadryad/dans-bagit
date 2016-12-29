@@ -7,7 +7,9 @@ import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
@@ -59,7 +61,7 @@ public class DANSBag
         public String description = null;
         public String format = null;
         public long size = -1;
-        String md5 = null;
+        public String md5 = null;
         public String dataFileIdent = null;
         public String bundle = null;
 
@@ -72,9 +74,12 @@ public class DANSBag
         }
     }
 
-    File zipFile = null;
-    File workingDir = null;
-    List<BagFileReference> fileRefs = new ArrayList<BagFileReference>();
+    private File zipFile = null;
+    private File workingDir = null;
+    private List<BagFileReference> fileRefs = new ArrayList<BagFileReference>();
+    private DDM ddm = null;
+    private DIM dim = null;
+    private Map<String, DIM> subDim = new HashMap<String, DIM>();
 
     /**
      * Create a BagIt object around a directory specified at the zipPath
@@ -159,16 +164,19 @@ public class DANSBag
         this.fileRefs.add(bfr);
     }
 
-    public void setDDM(DDM ddm) {
-
+    public void setDDM(DDM ddm)
+    {
+        this.ddm = ddm;
     }
 
-    public void setDIM(DIM dim) {
-
+    public void setDatasetDIM(DIM dim)
+    {
+        this.dim = dim;
     }
 
-    public void setDIM(DIM dim, String dataFileIdent) {
-
+    public void addDatafileDIM(DIM dim, String dataFileIdent)
+    {
+        this.subDim.put(dataFileIdent, dim);
     }
 
 
@@ -231,6 +239,27 @@ public class DANSBag
 
             // write the DANS files.xml document
             this.writeToZip(dfs.toXML(), "metadata/files.xml", out);
+
+            // write the DANS dataset.xml document
+            if (this.ddm != null)
+            {
+                this.writeToZip(this.ddm.toXML(), "metadata/dataset.xml", out);
+            }
+
+            // write the primary dim file
+            if (this.dim != null)
+            {
+                this.writeToZip(this.dim.toXML(), "data/metadata.xml", out);
+            }
+
+            // write the datafile dim files
+            for (String ident : this.subDim.keySet())
+            {
+                String dataDir = sanitizeFilename(ident);
+                String zipPath = "data/" + dataDir + "/metadata.xml";
+                DIM dim = this.subDim.get(ident);
+                this.writeToZip(dim.toXML(), zipPath, out);
+            }
 
             // write the custom tag files
             if (!"".equals(descriptions))
