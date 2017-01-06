@@ -68,7 +68,7 @@ public class BagItTest
             f.mkdirs();
         }
 
-        DANSBag db = new DANSBag(zipPath, workingDir);
+        DANSBag db = new DANSBag("testbag", zipPath, workingDir);
 
         // try adding a random set of bytes as a bitstream
         InputStream is = new ByteArrayInputStream("asdklfjqwoie weoifjwoef jwoeifjwefpji".getBytes());

@@ -76,6 +76,7 @@ public class DANSBag
 
     private File zipFile = null;
     private File workingDir = null;
+    private String name = null;
     private List<BagFileReference> fileRefs = new ArrayList<BagFileReference>();
     private DDM ddm = null;
     private DIM dim = null;
@@ -88,10 +89,10 @@ public class DANSBag
      * @param workingDir    Path to BagIt working directory, where files will be copied to in transition (especially during construction)
      * @throws IOException
      */
-    public DANSBag(String zipPath, String workingDir)
+    public DANSBag(String name, String zipPath, String workingDir)
             throws IOException
     {
-        this(new File(zipPath), new File(workingDir));
+        this(name, new File(zipPath), new File(workingDir));
     }
 
     /**
@@ -101,11 +102,12 @@ public class DANSBag
      * @param workingDir  File object representing the BagIt structure
      * @throws IOException
      */
-    public DANSBag(File zipFile, File workingDir)
+    public DANSBag(String name, File zipFile, File workingDir)
             throws IOException
     {
         this.zipFile = zipFile;
         this.workingDir = workingDir;
+        this.name = name;
 
         if (zipFile.exists())
         {
@@ -190,6 +192,8 @@ public class DANSBag
                 throw new RuntimeException("Cannot re-write a modified bag file.  You should either create a new bag file from the source files, or read in the old zip file and pass the components in here.");
             }
 
+            String base = this.sanitizeFilename(this.name);
+
             // prepare our zipped output stream
             FileOutputStream dest = new FileOutputStream(this.zipFile);
             ZipOutputStream out = new ZipOutputStream(new BufferedOutputStream(dest));
@@ -234,22 +238,25 @@ public class DANSBag
                     dfs.addFileMetadata(bfr.internalPath, "premis:messageDigest", bfr.md5);
                 }
 
-                this.writeToZip(bfr.getFile(), bfr.internalPath, out);
+                this.writeToZip(bfr.getFile(), base + "/" + bfr.internalPath, out);
             }
 
             // write the DANS files.xml document
-            this.writeToZip(dfs.toXML(), "metadata/files.xml", out);
+            String filesChecksum = this.writeToZip(dfs.toXML(), base + "/metadata/files.xml", out);
+            tagmanifest = tagmanifest + filesChecksum + "\t" + "metadata/files.xml" + "\n";
 
             // write the DANS dataset.xml document
             if (this.ddm != null)
             {
-                this.writeToZip(this.ddm.toXML(), "metadata/dataset.xml", out);
+                String datasetChecksum = this.writeToZip(this.ddm.toXML(), base + "/metadata/dataset.xml", out);
+                tagmanifest = tagmanifest + datasetChecksum + "\t" + "metadata/dataset.xml" + "\n";
             }
 
             // write the primary dim file
             if (this.dim != null)
             {
-                this.writeToZip(this.dim.toXML(), "data/metadata.xml", out);
+                String dimChecksum = this.writeToZip(this.dim.toXML(), base + "/data/metadata.xml", out);
+                manifest = manifest + dimChecksum + "\t" + "data/metadata.xml" + "\n";
             }
 
             // write the datafile dim files
@@ -258,41 +265,46 @@ public class DANSBag
                 String dataDir = sanitizeFilename(ident);
                 String zipPath = "data/" + dataDir + "/metadata.xml";
                 DIM dim = this.subDim.get(ident);
-                this.writeToZip(dim.toXML(), zipPath, out);
+                String subDimChecksum = this.writeToZip(dim.toXML(), base + "/" + zipPath, out);
+                manifest = manifest + subDimChecksum + "\t" + zipPath + "\n";
             }
 
             // write the custom tag files
             if (!"".equals(descriptions))
             {
-                String checksum = this.writeToZip(descriptions, "bitstream-description.txt", out);
+                String checksum = this.writeToZip(descriptions, base + "/bitstream-description.txt", out);
                 tagmanifest = tagmanifest + checksum + "\tbitstream-description.txt" + "\n";
             }
 
             if (!"".equals(formats))
             {
-                String checksum = this.writeToZip(formats, "bitstream-format.txt", out);
+                String checksum = this.writeToZip(formats, base + "/bitstream-format.txt", out);
                 tagmanifest = tagmanifest + checksum + "\tbitstream-format.txt" + "\n";
             }
 
             if (!"".equals(sizes))
             {
-                String checksum = this.writeToZip(sizes, "bitstream-size.txt", out);
+                String checksum = this.writeToZip(sizes, base + "/bitstream-size.txt", out);
                 tagmanifest = tagmanifest + checksum + "\tbitstream-size.txt" + "\n";
             }
 
             // write the checksum manifests
             if (!"".equals(manifest))
             {
-                this.writeToZip(manifest, "manifest-md5.txt", out);
+                String manifestChecksum = this.writeToZip(manifest, base + "/manifest-md5.txt", out);
+                tagmanifest = tagmanifest + manifestChecksum + "\tmanifest-md5.txt" + "\n";
             }
 
+            // write the bagit.txt
+            String bagitfile = "BagIt-Version: 0.97\nTag-File-Character-Encoding: UTF-8";
+            String bagitChecksum = this.writeToZip(bagitfile, base + "/bagit.txt", out);
+            tagmanifest = tagmanifest + bagitChecksum + "\tbagit.txt" + "\n";
+
+            // finally write the tag manifest
             if (!"".equals(tagmanifest))
             {
-                this.writeToZip(tagmanifest, "tagmanifest-md5.txt", out);
+                this.writeToZip(tagmanifest, base + "/tagmanifest-md5.txt", out);
             }
-
-            String bagitfile = "BagIt-Version: 0.97\nTag-File-Character-Encoding: UTF-8";
-            this.writeToZip(bagitfile, "bagit.txt", out);
 
             out.close();
         }
@@ -306,9 +318,6 @@ public class DANSBag
             throw new RuntimeException(e);
         }
     }
-
-
-
 
 
     private String sanitizeFilename(String inputName) {
