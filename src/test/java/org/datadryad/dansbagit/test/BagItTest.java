@@ -1,23 +1,13 @@
 package org.datadryad.dansbagit.test;
 
-import static org.junit.Assert.*;
-
 import org.apache.commons.io.FileUtils;
-import org.datadryad.dansbagit.DANSBag;
-import org.datadryad.dansbagit.DDM;
-import org.datadryad.dansbagit.DIM;
+import org.datadryad.dansbagit.*;
 import org.junit.Test;
 import org.junit.Before;
 import org.junit.After;
 
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.io.*;
+import java.util.*;
 
 public class BagItTest
 {
@@ -54,7 +44,7 @@ public class BagItTest
 
     @Test
     public void testMakeBag()
-            throws IOException
+            throws IOException, Exception
     {
         String workingDir = System.getProperty("user.dir") + "/src/test/resources/working/testmakebag";
         this.cleanup.add(workingDir);
@@ -107,5 +97,50 @@ public class BagItTest
 
         // finally output to file
         db.writeToFile();
+
+        // check that we can get all the properties from the object
+        String md5 = db.getMD5();
+        long size = db.size();
+        assert db.getZipName().equals("testmakebag.zip");
+
+        // lets read the whole file through a normal input stream
+        InputStream input = db.getInputStream();
+        byte[] whole = this.readInput(input, 8096);
+        input.close();
+
+        // now try reading the whole file through the FileSegementIterator
+        FileSegmentIterator fsi = db.getSegmentIterator(1000);
+        byte[] allparts = new byte[0];
+        while (fsi.hasNext())
+        {
+            FileSegmentInputStream fsis = fsi.next();
+            byte[] seg = this.readInput(fsis, 500);
+            allparts = this.combine(allparts, seg);
+        }
+
+        assert Arrays.equals(whole, allparts);
+
+        db.cleanupWorkingDir();
+        db.cleanupZip();
+    }
+
+    private byte[] readInput(InputStream is, int bufferSize)
+            throws Exception
+    {
+        ByteArrayOutputStream result = new ByteArrayOutputStream();
+        byte[] buffer = new byte[bufferSize];
+        int length;
+        while ((length = is.read(buffer)) != -1) {
+            result.write(buffer, 0, length);
+        }
+        return result.toByteArray();
+    }
+
+    public byte[] combine(byte[] a, byte[] b){
+        int length = a.length + b.length;
+        byte[] result = new byte[length];
+        System.arraycopy(a, 0, result, 0, a.length);
+        System.arraycopy(b, 0, result, a.length, b.length);
+        return result;
     }
 }

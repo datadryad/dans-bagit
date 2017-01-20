@@ -1,5 +1,7 @@
 package org.datadryad.dansbagit;
 
+import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 
 import java.io.*;
@@ -11,7 +13,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
 /**
@@ -120,6 +121,56 @@ public class DANSBag
             throws IOException
     {
         // TODO
+    }
+
+    public String getMD5()
+            throws Exception
+    {
+        if (!this.zipFile.exists())
+        {
+            throw new RuntimeException("You must writeFile before you can calculate the md5");
+        }
+
+        FileInputStream fis = new FileInputStream(this.zipFile);
+        String md5 = DigestUtils.md5Hex(fis);
+        fis.close();
+        return md5;
+    }
+
+    public String getZipName()
+    {
+        return this.zipFile.getName();
+    }
+
+    public InputStream getInputStream()
+            throws Exception
+    {
+        if (!this.zipFile.exists())
+        {
+            throw new RuntimeException("You must writeFile before you can read the input stream");
+        }
+
+        return new FileInputStream(this.zipFile);
+    }
+
+    public FileSegmentIterator getSegmentIterator(long size)
+            throws Exception
+    {
+        if (!this.zipFile.exists())
+        {
+            throw new RuntimeException("You must writeFile before you can read the segments");
+        }
+
+        return new FileSegmentIterator(this.zipFile, size);
+    }
+
+    public long size()
+    {
+        if (!this.zipFile.exists())
+        {
+            throw new RuntimeException("You must writeFile before you can determine the size");
+        }
+        return this.zipFile.length();
     }
 
     public void addBitstream(InputStream is, String filename, String format, String description, String dataFileIdent, String bundle)
@@ -316,6 +367,24 @@ public class DANSBag
         catch (NoSuchAlgorithmException e)
         {
             throw new RuntimeException(e);
+        }
+    }
+
+
+    public void cleanupWorkingDir()
+            throws IOException
+    {
+        if (this.workingDir.exists())
+        {
+            FileUtils.deleteDirectory(this.workingDir);
+        }
+    }
+
+    public void cleanupZip()
+    {
+        if (this.zipFile.exists())
+        {
+            this.zipFile.delete();
         }
     }
 
