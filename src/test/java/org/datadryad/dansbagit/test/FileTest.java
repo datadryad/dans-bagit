@@ -161,16 +161,46 @@ public class FileTest
     }
 
     @Test
-    public void testFileSegmentIterator()
+    public void testFileSegmentIteratorNoMD5()
             throws Exception
     {
-        FileSegmentIterator fsi = new FileSegmentIterator(new File(this.testfile), 100);
+        FileSegmentIterator fsi = new FileSegmentIterator(new File(this.testfile), 100, false);
 
         int i = 1;
         String got = "";
         while (fsi.hasNext())
         {
             FileSegmentInputStream fsis = fsi.next();
+
+            // read the input stream
+            ByteArrayOutputStream result = new ByteArrayOutputStream();
+            byte[] buffer = new byte[50];
+            int length;
+            while ((length = fsis.read(buffer)) != -1) {
+                result.write(buffer, 0, length);
+            }
+            got += result.toString("UTF-8");
+
+            assert got.equals(this.fileContent.substring(0, i * 100));
+            i++;
+        }
+
+        assert got.equals(this.fileContent);
+    }
+
+    @Test
+    public void testFileSegmentIteratorWithMD5()
+            throws Exception
+    {
+        FileSegmentIterator fsi = new FileSegmentIterator(new File(this.testfile), 100, true);
+
+        int i = 1;
+        String got = "";
+        while (fsi.hasNext())
+        {
+            FileSegmentInputStream fsis = fsi.next();
+            String md5 = fsis.getMd5();
+            assert md5 != null;
 
             // read the input stream
             ByteArrayOutputStream result = new ByteArrayOutputStream();

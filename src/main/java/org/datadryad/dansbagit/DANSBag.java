@@ -153,7 +153,7 @@ public class DANSBag
         return new FileInputStream(this.zipFile);
     }
 
-    public FileSegmentIterator getSegmentIterator(long size)
+    public FileSegmentIterator getSegmentIterator(long size, boolean md5)
             throws Exception
     {
         if (!this.zipFile.exists())
@@ -161,7 +161,7 @@ public class DANSBag
             throw new RuntimeException("You must writeFile before you can read the segments");
         }
 
-        return new FileSegmentIterator(this.zipFile, size);
+        return new FileSegmentIterator(this.zipFile, size, md5);
     }
 
     public long size()
@@ -177,7 +177,7 @@ public class DANSBag
         throws IOException
     {
         // escape the dataFileIdent
-        String dataFilename = sanitizeFilename(dataFileIdent);
+        String dataFilename = Files.sanitizeFilename(dataFileIdent);
 
         // get the correct folder/filename for the bitstream
         String internalDir = "data" + File.separator + dataFilename + File.separator + bundle;
@@ -208,7 +208,7 @@ public class DANSBag
         BagFileReference bfr = new BagFileReference();
         bfr.fullPath = filePath;
         bfr.internalPath = internalFile;
-        bfr.md5 = this.digestToString(md);
+        bfr.md5 = Files.digestToString(md);
         bfr.description = description;
         bfr.format = format;
         bfr.size = (new File(filePath)).length();
@@ -243,7 +243,7 @@ public class DANSBag
                 throw new RuntimeException("Cannot re-write a modified bag file.  You should either create a new bag file from the source files, or read in the old zip file and pass the components in here.");
             }
 
-            String base = this.sanitizeFilename(this.name);
+            String base = Files.sanitizeFilename(this.name);
 
             // prepare our zipped output stream
             FileOutputStream dest = new FileOutputStream(this.zipFile);
@@ -313,7 +313,7 @@ public class DANSBag
             // write the datafile dim files
             for (String ident : this.subDim.keySet())
             {
-                String dataDir = sanitizeFilename(ident);
+                String dataDir = Files.sanitizeFilename(ident);
                 String zipPath = "data/" + dataDir + "/metadata.xml";
                 DIM dim = this.subDim.get(ident);
                 String subDimChecksum = this.writeToZip(dim.toXML(), base + "/" + zipPath, out);
@@ -388,21 +388,6 @@ public class DANSBag
         }
     }
 
-
-    private String sanitizeFilename(String inputName) {
-        return inputName.replaceAll("[^a-zA-Z0-9-_\\.]", "_");
-    }
-
-    private String digestToString(MessageDigest md) {
-        byte[] b = md.digest();
-        String result = "";
-        for (int i=0; i < b.length; i++)
-        {
-            result += Integer.toString( ( b[i] & 0xff ) + 0x100, 16).substring( 1 );
-        }
-        return result;
-    }
-
     /**
      * Write the file referenced by the file handle to the given path inside the given zip output stream
      *
@@ -464,6 +449,6 @@ public class DANSBag
         }
         origin.close();
 
-        return this.digestToString(md);
+        return Files.digestToString(md);
     }
 }

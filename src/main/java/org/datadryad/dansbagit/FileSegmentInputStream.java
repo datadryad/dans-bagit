@@ -10,12 +10,23 @@ public class FileSegmentInputStream extends InputStream
     private long size;
     private long pointer = 0;
     private boolean eof = false;
+    private String md5;
 
     public FileSegmentInputStream(RandomAccessFile file, long size)
     {
         super();
         this.raf = file;
         this.size = size;
+    }
+
+    public String getMd5()
+    {
+        return md5;
+    }
+
+    public void setMd5(String md5)
+    {
+        this.md5 = md5;
     }
 
     @Override

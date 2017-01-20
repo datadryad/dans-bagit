@@ -109,11 +109,13 @@ public class BagItTest
         input.close();
 
         // now try reading the whole file through the FileSegementIterator
-        FileSegmentIterator fsi = db.getSegmentIterator(1000);
+        FileSegmentIterator fsi = db.getSegmentIterator(1000, true);
         byte[] allparts = new byte[0];
         while (fsi.hasNext())
         {
             FileSegmentInputStream fsis = fsi.next();
+            String cs = fsis.getMd5();
+            assert cs != null;
             byte[] seg = this.readInput(fsis, 500);
             allparts = this.combine(allparts, seg);
         }
