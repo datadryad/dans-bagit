@@ -1,9 +1,6 @@
 package org.datadryad.dansbagit;
 
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.RandomAccessFile;
+import java.io.*;
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.util.Iterator;
@@ -52,7 +49,14 @@ public class FileSegmentIterator implements Iterator<FileSegmentInputStream>
         {
             FileSegmentInputStream fsis1 = new FileSegmentInputStream(this.raf, this.size);
             checksum = this.getMD5(fsis1);
-            fsis1.setMd5(checksum);
+            try
+            {
+                fsis1.close();
+            }
+            catch (IOException e)
+            {
+                throw new RuntimeException(e);
+            }
             this.setFilePointer(this.pointer);
         }
 
@@ -80,24 +84,13 @@ public class FileSegmentIterator implements Iterator<FileSegmentInputStream>
         }
     }
 
-    private String getMD5(FileSegmentInputStream fsis)
+    private String getMD5(InputStream fsis)
     {
         try
         {
-            MessageDigest md = MessageDigest.getInstance("MD5");
-            BufferedInputStream origin = new BufferedInputStream(fsis, BUFFER);
-            DigestInputStream dis = new DigestInputStream(origin, md);
-
-            byte[] buffer = new byte[BUFFER];
-            int numOfBytesRead;
-            while ((numOfBytesRead = dis.read(buffer)) != -1)
-            {
-                md.update(buffer, 0, numOfBytesRead);
-            }
-            byte[] hash = md.digest();
-            return Files.digestToString(md);
+            return org.apache.commons.codec.digest.DigestUtils.md5Hex(fsis);
         }
-        catch (Exception e)
+        catch (IOException e)
         {
             throw new RuntimeException(e);
         }

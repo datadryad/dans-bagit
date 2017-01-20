@@ -126,6 +126,93 @@ public class BagItTest
         db.cleanupZip();
     }
 
+    @Test
+    public void testSegments()
+            throws Exception
+    {
+        Map<String, String> checksums = new HashMap<String, String>();
+
+        String workingDir = System.getProperty("user.dir") + "/src/test/resources/working/testmakebag";
+        this.cleanup.add(workingDir);
+
+        String zipPath = System.getProperty("user.dir") + "/src/test/resources/working/testmakebag.zip";
+        this.cleanup.add(zipPath);
+
+        File f = new File(workingDir);
+        if (!f.exists())
+        {
+            f.mkdirs();
+        }
+
+        DANSBag db = new DANSBag("testbag", zipPath, workingDir);
+
+        // try adding a random set of bytes as a bitstream
+        InputStream is = new ByteArrayInputStream("asdklfjqwoie weoifjwoef jwoeifjwefpji".getBytes());
+        db.addBitstream(is, "myfile.txt", "text/plain", "some plain text", "10.whatever/ident/1", "ORIGINAL");
+
+        // set some metadata on that data file
+        DIM dfdim = new DIM();
+        dfdim.addDSpaceField("dc.contributor.author", "Author A");
+        dfdim.addDSpaceField("dc.contributor.author", "Author B");
+        dfdim.addDSpaceField("dc.identifier", "10.1234/ident/1");
+        db.addDatafileDIM(dfdim, "10.whatever/ident/1");
+
+        // create some DDM metadata
+        DDM ddm = new DDM();
+
+        ddm.addProfileField("dc:title", "The Title");
+        ddm.addProfileField("dc:creator", "Creator 1");
+        ddm.addProfileField("dc:creator", "Creator 2");
+        ddm.addProfileField("dc:creator", "Creator 1");
+
+        Map<String, String> attrs = new HashMap<String, String>();
+        attrs.put("xsi:type", "id-type:DOI");
+
+        ddm.addDCMIField("dcterms:hasPart", "10.1234/ident");
+        ddm.addDCMIField("dcterms:identifier", "10.4321/main", attrs);
+
+        db.setDDM(ddm);
+
+        // create some DIM metadata
+        DIM dim = new DIM();
+        dim.addDSpaceField("dc.contributor.author", "Author 1");
+        dim.addDSpaceField("dc.contributor.author", "Author 2");
+        dim.addDSpaceField("dc.identifier", "10.1234/ident/a");
+
+        db.setDatasetDIM(dim);
+
+        // finally output to file
+        db.writeToFile();
+
+        // now try reading the whole file through the FileSegementIterator
+        FileSegmentIterator fsi = db.getSegmentIterator(1000, true);
+        int i = 1;
+        while (fsi.hasNext())
+        {
+            FileSegmentInputStream fsis = fsi.next();
+            String outPath = zipPath + "." + Integer.toString(i);
+            this.cleanup.add(outPath);
+
+            String cs = fsis.getMd5();
+            checksums.put(outPath, cs);
+
+            File targetFile = new File(outPath);
+            FileUtils.copyInputStreamToFile(fsis, targetFile);
+
+            i++;
+        }
+
+        for (String path : checksums.keySet())
+        {
+            FileInputStream fis = new FileInputStream(new File(path));
+            String md5 = org.apache.commons.codec.digest.DigestUtils.md5Hex(fis);
+            fis.close();
+            assert md5.equals(checksums.get(path));
+
+            System.out.println(path + " - " + md5);
+        }
+    }
+
     private byte[] readInput(InputStream is, int bufferSize)
             throws Exception
     {
