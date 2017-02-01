@@ -4,12 +4,13 @@ import nu.xom.Attribute;
 import nu.xom.Document;
 import nu.xom.Element;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class DIM
+public class DIM extends XMLFile
 {
     private static String DIM_NAMESPACE = "http://www.dspace.org/xmlns/dspace/dim";
 
@@ -45,6 +46,7 @@ public class DIM
     }
 
     public String toXML()
+            throws IOException
     {
         Element dim = new Element("dim:dim", DIM_NAMESPACE);
         dim.addNamespaceDeclaration("dim", DIM_NAMESPACE);
@@ -71,7 +73,8 @@ public class DIM
             dim.appendChild(field);
         }
 
-        Document doc = new Document(dim);
-        return doc.toXML();
+        //Document doc = new Document(dim);
+        //return doc.toXML();
+        return this.xml2String(dim);
     }
 }

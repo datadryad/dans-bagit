@@ -4,10 +4,11 @@ package org.datadryad.dansbagit;
 import nu.xom.Document;
 import nu.xom.Element;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-public class DANSFiles
+public class DANSFiles extends XMLFile
 {
     /** Namespace of the DC Terms metadata elements */
     private static String DCTERMS_NAMESPACE = "http://purl.org/dc/terms/";
@@ -31,6 +32,7 @@ public class DANSFiles
     }
 
     public String toXML()
+            throws IOException
     {
         Element files = new Element("files");
         files.addNamespaceDeclaration("dcterms", DCTERMS_NAMESPACE);
@@ -58,8 +60,9 @@ public class DANSFiles
             files.appendChild(fileEntry);
         }
 
-        Document doc = new Document(files);
-        return doc.toXML();
+        // Document doc = new Document(files);
+        // return doc.toXML();
+        return this.xml2String(files);
     }
 
     private String getNamespace(String fieldName)

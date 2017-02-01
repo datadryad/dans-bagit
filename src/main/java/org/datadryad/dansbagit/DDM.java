@@ -3,13 +3,17 @@ package org.datadryad.dansbagit;
 import nu.xom.Attribute;
 import nu.xom.Document;
 import nu.xom.Element;
+import nu.xom.Serializer;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class DDM
+public class DDM extends XMLFile
 {
     private static String DC_NAMESPACE = "http://purl.org/dc/elements/1.1/";
     private static String DCTERMS_NAMESPACE = "http://purl.org/dc/terms/";
@@ -54,6 +58,7 @@ public class DDM
     }
 
     public String toXML()
+            throws IOException
     {
         Element ddm = new Element("ddm:DDM", DDM_NAMESPACE);
         ddm.addNamespaceDeclaration("dcterms", DCTERMS_NAMESPACE);
@@ -77,8 +82,9 @@ public class DDM
             ddm.appendChild(profile);
         }
 
-        Document doc = new Document(ddm);
-        return doc.toXML();
+        return this.xml2String(ddm);
+        // Document doc = new Document(ddm);
+        // return doc.toXML();
     }
 
     private void addToRegister(Map<String, List<Map<String, String>>> register, String field, String value, Map<String, String> attrs)
