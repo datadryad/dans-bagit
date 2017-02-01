@@ -123,6 +123,11 @@ public class DANSBag
         // TODO
     }
 
+    public String getWorkingDir()
+    {
+        return this.workingDir.getAbsolutePath();
+    }
+
     public String getMD5()
             throws Exception
     {
@@ -139,7 +144,20 @@ public class DANSBag
 
     public String getZipName()
     {
+        if (!this.zipFile.exists())
+        {
+            throw new RuntimeException("You must writeFile before you can ask questions about the zip");
+        }
         return this.zipFile.getName();
+    }
+
+    public String getZipPath()
+    {
+        if (!this.zipFile.exists())
+        {
+            throw new RuntimeException("You must writeFile before you can ask questions about the zip");
+        }
+        return this.zipFile.getAbsolutePath();
     }
 
     public InputStream getInputStream()
