@@ -1,0 +1,25 @@
+<dim:dim dspaceType="ITEM" xmlns:dim="http://www.dspace.org/xmlns/dspace/dim">             
+    <dim:field mdschema="dc" element="contributor" qualifier="author">Elbakyan, Alexandra</dim:field>
+	<dim:field mdschema="dc" element="contributor" qualifier="author">Bohannon, John</dim:field>
+
+    <dim:field mdschema="dc" element="coverage" qualifier="spatial">Global</dim:field>
+    <dim:field mdschema="dc" element="date" qualifier="accessioned">2016-04-28T18:03:43Z</dim:field>
+    <dim:field mdschema="dc" element="date" qualifier="available">2016-04-28T18:03:43Z</dim:field>
+    <dim:field mdschema="dc" element="date" qualifier="issued">2016-04-28</dim:field>
+    <dim:field mdschema="dc" element="identifier">doi:10.5061/dryad.q447c</dim:field>
+    <dim:field mdschema="dc" element="identifier" qualifier="citation">Bohannon J (2016) Who's downloading pirated papers? Everyone. Science 352(6285): 508-512.</dim:field>
+    <dim:field mdschema="dc" element="identifier" qualifier="uri">http://hdl.handle.net/10255/dryad.114249</dim:field>
+    <dim:field mdschema="dc" element="description">Where in the world are the Sci-Hub users? And what are they reading? These data are from the Sci-Hub server logs from 1 September 2015 through 29 February 2016. They include 28 million download requests with timestamps, geolocations (latitude, longitude), and the Digital Object Identifiers (DOI) of each document requested for download. The geolocation is the result of a clustering algorithm that mapped the Internet Protocol (IP) addresses of all users to their nearest city geolocation, based on data from Maxmind and the Google Maps API. The original IP addresses of users are not included. These data provide the first global view of the readership of the world's largest online, open source scholarly library.</dim:field>
+    <dim:field mdschema="dc" element="relation" qualifier="ispartofseries">352;6284;2016</dim:field>
+    <dim:field mdschema="dc" element="relation" qualifier="haspart">doi:10.5061/dryad.q447c/1</dim:field>
+	<dim:field mdschema="dc" element="relation" qualifier="haspart">doi:10.5061/dryad.q447c/2</dim:field>
+	<dim:field mdschema="dc" element="relation" qualifier="haspart">doi:10.5061/dryad.q447c/3</dim:field>
+	<dim:field mdschema="dc" element="relation" qualifier="isreferencedby">doi:10.1126/science.352.6285.508</dim:field>
+	<dim:field mdschema="dc" element="relation" qualifier="isreferencedby">PMID:27126020</dim:field>
+    <dim:field mdschema="dc" element="subject">open access</dim:field>
+	<dim:field mdschema="dc" element="subject">scientific communication</dim:field>
+    <dim:field mdschema="dc" element="title">Data from: Who's downloading pirated papers? Everyone</dim:field>
+    <dim:field mdschema="dc" element="type">Article</dim:field>
+    <dim:field mdschema="dc" element="contributor" qualifier="correspondingAuthor">gonzo@aaas.org</dim:field>
+    <dim:field mdschema="prism" element="publicationName">Science</dim:field>
+</dim:dim>

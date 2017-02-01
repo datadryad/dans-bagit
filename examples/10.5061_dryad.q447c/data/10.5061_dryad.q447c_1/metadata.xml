@@ -1,0 +1,22 @@
+<dim:dim dspaceType="ITEM" xmlns:dim="http://www.dspace.org/xmlns/dspace/dim">             
+    <dim:field mdschema="dc" element="contributor" qualifier="author">Elbakyan, Alexandra</dim:field>
+	<dim:field mdschema="dc" element="contributor" qualifier="author">Bohannon, John</dim:field>
+
+    <dim:field mdschema="dc" element="coverage" qualifier="spatial">global</dim:field>
+    <dim:field mdschema="dc" element="date" qualifier="accessioned">2016-04-28T18:03:44Z</dim:field>
+    <dim:field mdschema="dc" element="date" qualifier="available">2016-04-28T18:03:44Z</dim:field>
+    <dim:field mdschema="dc" element="date" qualifier="issued">2016-04-28</dim:field>
+    <dim:field mdschema="dc" element="identifier">doi:10.5061/dryad.q447c/1</dim:field>
+    <dim:field mdschema="dc" element="identifier" qualifier="uri">http://hdl.handle.net/10255/dryad.114259</dim:field>
+    <dim:field mdschema="dc" element="description">These data include 28 million download request events from the server logs of Sci-Hub from 1 September 2015 through 29 February 2016. The uncompressed 2.7 gigabytes of data are separated into 6 data files, one for each month, in tab-delimited text format.</dim:field>
+	<dim:field mdschema="dc" element="format" qualifier="extent">684564797</dim:field>
+    <dim:field mdschema="dc" element="relation" qualifier="ispartof">doi:10.5061/dryad.q447c</dim:field>
+	<dim:field mdschema="dc" element="rights" qualifier="uri">http://creativecommons.org/publicdomain/zero/1.0/</dim:field>
+    <dim:field mdschema="dc" element="subject">open access</dim:field>
+	<dim:field mdschema="dc" element="subject">scientific communication</dim:field>
+    <dim:field mdschema="dc" element="title">Sci-Hub download data</dim:field>
+    <dim:field mdschema="dc" element="type">Dataset</dim:field>
+    <dim:field mdschema="dc" element="type" qualifier="embargo">none</dim:field>
+    <dim:field mdschema="dryad" element="pageviews">1600</dim:field>
+	<dim:field mdschema="dryad" element="downloads">2606</dim:field>
+</dim:dim>

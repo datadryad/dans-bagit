@@ -1,0 +1,22 @@
+<dim:dim dspaceType="ITEM" xmlns:dim="http://www.dspace.org/xmlns/dspace/dim">             
+    <dim:field mdschema="dc" element="contributor" qualifier="author">Elbakyan, Alexandra</dim:field>
+	<dim:field mdschema="dc" element="contributor" qualifier="author">Bohannon, John</dim:field>
+
+    <dim:field mdschema="dc" element="coverage" qualifier="spatial">Global</dim:field>
+    <dim:field mdschema="dc" element="date" qualifier="accessioned">2016-04-28T18:03:46Z</dim:field>
+    <dim:field mdschema="dc" element="date" qualifier="available">2016-04-28T18:03:46Z</dim:field>
+    <dim:field mdschema="dc" element="date" qualifier="issued">2016-04-28</dim:field>
+    <dim:field mdschema="dc" element="identifier">doi:10.5061/dryad.q447c/3</dim:field>
+    <dim:field mdschema="dc" element="identifier" qualifier="uri">http://hdl.handle.net/10255/dryad.114712</dim:field>
+    <dim:field mdschema="dc" element="description">Data scraped from the CrossRef website which can be used to replicate the analysis of downloads by publisher.</dim:field>
+	<dim:field mdschema="dc" element="format" qualifier="extent">578571</dim:field>
+    <dim:field mdschema="dc" element="relation" qualifier="ispartof">doi:10.5061/dryad.q447c</dim:field>
+	<dim:field mdschema="dc" element="rights" qualifier="uri">http://creativecommons.org/publicdomain/zero/1.0/</dim:field>
+    <dim:field mdschema="dc" element="subject">open access</dim:field>
+	<dim:field mdschema="dc" element="subject">scientific communication</dim:field>
+    <dim:field mdschema="dc" element="title">Sci-Hub publisher DOI prefixes</dim:field>
+    <dim:field mdschema="dc" element="type">Dataset</dim:field>
+    <dim:field mdschema="dc" element="type" qualifier="embargo">none</dim:field>
+    <dim:field mdschema="dryad" element="pageviews">255</dim:field>
+	<dim:field mdschema="dryad" element="downloads">643</dim:field>
+</dim:dim>

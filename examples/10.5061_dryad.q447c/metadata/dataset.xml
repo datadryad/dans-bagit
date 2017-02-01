@@ -1,0 +1,27 @@
+<ddm:DDM
+        xmlns:dc="http://purl.org/dc/elements/1.1/"
+        xmlns:dcx-dai="http://easy.dans.knaw.nl/schemas/dcx/dai/"
+        xmlns:ddm="http://easy.dans.knaw.nl/schemas/md/ddm/"
+        xmlns:dcterms="http://purl.org/dc/terms/"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:id-type="http://easy.dans.knaw.nl/schemas/vocab/identifier-type/">
+    <ddm:profile>
+        <dc:title>
+            Data from: Who's downloading pirated papers? Everyone
+        </dc:title>
+        <dcterms:description>
+            Where in the world are the Sci-Hub users? And what are they reading? These data are from the Sci-Hub server logs from 1 September 2015 through 29 February 2016. They include 28 million download requests with timestamps, geolocations (latitude, longitude), and the Digital Object Identifiers (DOI) of each document requested for download. The geolocation is the result of a clustering algorithm that mapped the Internet Protocol (IP) addresses of all users to their nearest city geolocation, based on data from Maxmind and the Google Maps API. The original IP addresses of users are not included. These data provide the first global view of the readership of the world's largest online, open source scholarly library.
+        </dcterms:description>
+		<dc:creator>Elbakyan, Alexandra</dc:creator>
+		<dc:creator>Bohannon, John</dc:creator>
+        <ddm:created>2016-04-28</ddm:created>
+    </ddm:profile>
+    <ddm:dcmiMetadata>
+        <dcterms:identifier xsi:type="id-type:DOI">10.5061/dryad.q447c</dcterms:identifier>
+		<dcterms:hasPart>10.5061/dryad.q447c/1</dcterms:hasPart>
+		<dcterms:hasPart>10.5061/dryad.q447c/2</dcterms:hasPart>
+		<dcterms:hasPart>10.5061/dryad.q447c/3</dcterms:hasPart>
+		<dcterms:isReferencedBy>10.1126/science.352.6285.508</dcterms:isReferencedBy>
+		<dcterms:isReferencedBy>PMID:27126020</dcterms:isReferencedBy>
+    </ddm:dcmiMetadata>
+</ddm:DDM>

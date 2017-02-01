@@ -1,0 +1,4 @@
+application/zip				data/10.5061_dryad.q447c_1/ORIGINAL/scihub_data.zip
+text/html					data/10.5061_dryad.q447c_1/ORIGINAL/Sci-Hub.html
+application/octet-stream	data/10.5061_dryad.q447c_1/ORIGINAL/Sci-Hub.ipynb
+text/csv					data/10.5061_dryad.q447c_3/ORIGINAL/publisher_DOI_prefixes.csv

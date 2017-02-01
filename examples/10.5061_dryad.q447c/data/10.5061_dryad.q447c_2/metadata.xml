@@ -1,0 +1,23 @@
+<dim:dim dspaceType="ITEM" xmlns:dim="http://www.dspace.org/xmlns/dspace/dim">             
+    <dim:field mdschema="dc" element="contributor" qualifier="author">Elbakyan, Alexandra</dim:field>
+	<dim:field mdschema="dc" element="contributor" qualifier="author">Bohannon, John</dim:field>
+
+    <dim:field mdschema="dc" element="coverage" qualifier="spatial">Global</dim:field>
+    <dim:field mdschema="dc" element="date" qualifier="accessioned">2016-04-28T18:03:45Z</dim:field>
+    <dim:field mdschema="dc" element="date" qualifier="available">2016-04-28T18:03:45Z</dim:field>
+    <dim:field mdschema="dc" element="date" qualifier="issued">2016-04-28</dim:field>
+    <dim:field mdschema="dc" element="identifier">doi:10.5061/dryad.q447c/2</dim:field>
+    <dim:field mdschema="dc" element="identifier" qualifier="uri">http://hdl.handle.net/10255/dryad.114711</dim:field>
+    <dim:field mdschema="dc" element="description">IPython Notebook used to process the raw server log data (processing the GIS files into CSV, scraping DOI metadata, etc.).</dim:field>
+	<dim:field mdschema="dc" element="format" qualifier="extent">593934</dim:field>
+<dim:field mdschema="dc" element="format" qualifier="extent">414969</dim:field>
+    <dim:field mdschema="dc" element="relation" qualifier="ispartof">doi:10.5061/dryad.q447c</dim:field>
+	<dim:field mdschema="dc" element="rights" qualifier="uri">http://creativecommons.org/publicdomain/zero/1.0/</dim:field>
+    <dim:field mdschema="dc" element="subject">open access</dim:field>
+	<dim:field mdschema="dc" element="subject">scientific communication</dim:field>
+    <dim:field mdschema="dc" element="title">IPython Notebook for Sci-Hub raw data</dim:field>
+    <dim:field mdschema="dc" element="type">Dataset</dim:field>
+    <dim:field mdschema="dc" element="type" qualifier="embargo">none</dim:field>
+    <dim:field mdschema="dryad" element="pageviews">301</dim:field>
+	<dim:field mdschema="dryad" element="downloads">1827</dim:field>
+</dim:dim>

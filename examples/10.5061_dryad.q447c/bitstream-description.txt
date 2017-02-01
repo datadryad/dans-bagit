@@ -1,0 +1,4 @@
+dataset-file	data/10.5061_dryad.q447c_1/ORIGINAL/scihub_data.zip
+dataset-file	data/10.5061_dryad.q447c_2/ORIGINAL/Sci-Hub.html
+dataset-file	data/10.5061_dryad.q447c_2/ORIGINAL/Sci-Hub.ipynb
+dataset-file	data/10.5061_dryad.q447c_3/ORIGINAL/publisher_DOI_prefixes.csv

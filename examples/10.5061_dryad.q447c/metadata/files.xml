@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<files xmlns:dcterms="http://purl.org/dc/terms/"
+		xmlns:dc="http://purl.org/dc/elements/1.1/"
+		xmlns:premis="http://www.loc.gov/standards/premis">
+
+    <file filepath="data/metadata.xml">
+        <dc:format>text/xml</dc:format>
+		<dcterms:extent></dcterms:extent>
+		<dc:description>metadata file</dc:description>
+		<premis:messageDigestAlgorithm>MD5</premis:messageDigestAlgorithm>
+        <premis:messageDigest>9113bad3a4231f427e26618f3594827c</premis:messageDigest>
+    </file>
+
+	<file filepath="data/10.5061_dryad.q447c_1/metadata.xml">
+        <dc:format>text/xml</dc:format>
+		<dcterms:extent></dcterms:extent>
+		<dc:description>metadata file</dc:description>
+		<premis:messageDigestAlgorithm>MD5</premis:messageDigestAlgorithm>
+        <premis:messageDigest>235b1d930bc3f623082b7a5d14673959</premis:messageDigest>
+    </file>
+
+	<file filepath="data/10.5061_dryad.q447c_1/ORIGINAL/scihub-data.zip">
+        <dc:format>application/zip</dc:format>
+		<dcterms:extent>684564797</dcterms:extent>
+		<dc:description>dataset-file</dc:description>
+		<premis:messageDigestAlgorithm>MD5</premis:messageDigestAlgorithm>
+        <premis:messageDigest>e63e291bb81259b790a0479ff2d6d527</premis:messageDigest>
+    </file>
+
+	<file filepath="data/10.5061_dryad.q447c_2/metadata.xml">
+        <dc:format>text/xml</dc:format>
+		<dcterms:extent></dcterms:extent>
+		<dc:description>metadata file</dc:description>
+		<premis:messageDigestAlgorithm>MD5</premis:messageDigestAlgorithm>
+        <premis:messageDigest>4db698c1e5e2b9c65aa423118e8a887f</premis:messageDigest>
+    </file>
+
+	<file filepath="data/10.5061_dryad.q447c_2/ORIGINAL/Sci-Hub.html">
+        <dc:format>text/html</dc:format>
+		<dcterms:extent>593934</dcterms:extent>
+		<dc:description>dataset-file</dc:description>
+		<premis:messageDigestAlgorithm>MD5</premis:messageDigestAlgorithm>
+        <premis:messageDigest>5f1bd392d8aa4d79dbad95874a421642</premis:messageDigest>
+    </file>
+
+	<file filepath="data/10.5061_dryad.q447c_2/ORIGINAL/Sci-Hub.ipynb">
+        <dc:format>application/octet-stream</dc:format>
+		<dcterms:extent>414969</dcterms:extent>
+		<dc:description>dataset-file</dc:description>
+		<premis:messageDigestAlgorithm>MD5</premis:messageDigestAlgorithm>
+        <premis:messageDigest>4db698c1e5e2b9c65aa423118e8a887f</premis:messageDigest>
+    </file>
+
+	<file filepath="data/10.5061_dryad.q447c_3/metadata.xml">
+        <dc:format>text/xml</dc:format>	
+		<dcterms:extent></dcterms:extent>
+		<dc:description>metadata file</dc:description>
+		<premis:messageDigestAlgorithm>MD5</premis:messageDigestAlgorithm>
+        <premis:messageDigest>4db698c1e5e2b9c65aa423118e8a887f</premis:messageDigest>
+    </file>
+
+	<file filepath="data/10.5061_dryad.q447c_3/ORIGINAL/publisher_DOI_prefixes.csv">
+        <dc:format>text/csv</dc:format>
+		<dcterms:extent>578571</dcterms:extent>
+		<dc:description>dataset-file</dc:description>
+		<premis:messageDigestAlgorithm>MD5</premis:messageDigestAlgorithm>
+        <premis:messageDigest>4db698c1e5e2b9c65aa423118e8a887f</premis:messageDigest>
+    </file>
+</files>
