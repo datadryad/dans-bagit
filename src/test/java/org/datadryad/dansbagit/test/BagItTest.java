@@ -197,7 +197,8 @@ public class BagItTest
             checksums.put(outPath, cs);
 
             File targetFile = new File(outPath);
-            FileUtils.copyInputStreamToFile(fsis, targetFile);
+            java.nio.file.Files.copy(fsis, targetFile.toPath());
+            // FileUtils.copyInputStreamToFile(fsis, targetFile);
 
             i++;
         }
@@ -205,7 +206,8 @@ public class BagItTest
         for (String path : checksums.keySet())
         {
             FileInputStream fis = new FileInputStream(new File(path));
-            String md5 = org.apache.commons.codec.digest.DigestUtils.md5Hex(fis);
+            // String md5 = org.apache.commons.codec.digest.DigestUtils.md5Hex(fis);
+            String md5 = Files.md5Hex(fis);
             fis.close();
             assert md5.equals(checksums.get(path));
 

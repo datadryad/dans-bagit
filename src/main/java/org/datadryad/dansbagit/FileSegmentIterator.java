@@ -3,13 +3,12 @@ package org.datadryad.dansbagit;
 import java.io.*;
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Iterator;
 import java.util.zip.ZipEntry;
 
 public class FileSegmentIterator implements Iterator<FileSegmentInputStream>
 {
-    private static final int BUFFER = 8192;
-
     private RandomAccessFile raf = null;
     private long pointer = 0;
     private long size = -1;
@@ -88,9 +87,14 @@ public class FileSegmentIterator implements Iterator<FileSegmentInputStream>
     {
         try
         {
-            return org.apache.commons.codec.digest.DigestUtils.md5Hex(fsis);
+            // return org.apache.commons.codec.digest.DigestUtils.md5Hex(fsis);
+            return Files.md5Hex(fsis);
         }
         catch (IOException e)
+        {
+            throw new RuntimeException(e);
+        }
+        catch (NoSuchAlgorithmException e)
         {
             throw new RuntimeException(e);
         }

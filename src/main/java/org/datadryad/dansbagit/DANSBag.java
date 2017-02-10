@@ -137,7 +137,8 @@ public class DANSBag
         }
 
         FileInputStream fis = new FileInputStream(this.zipFile);
-        String md5 = DigestUtils.md5Hex(fis);
+        // String md5 = DigestUtils.md5Hex(fis);
+        String md5 = Files.md5Hex(fis);
         fis.close();
         return md5;
     }
