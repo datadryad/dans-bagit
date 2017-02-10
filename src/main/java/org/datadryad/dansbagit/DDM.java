@@ -34,6 +34,19 @@ public class DDM extends XMLFile
         nsMap.put("id-type", ID_NAMESPACE);
     }
 
+    private static final List<String> profileOrder;
+    static
+    {
+        profileOrder = new ArrayList<String>();
+        profileOrder.add("dc:title");
+        profileOrder.add("dc:description");
+        profileOrder.add("dc:creator");
+        profileOrder.add("ddm:created");
+        profileOrder.add("ddm:available");
+        profileOrder.add("ddm:audience");
+        profileOrder.add("ddm:accessRights");
+    }
+
     private Map<String, List<Map<String, String>>> profileFields = new HashMap<String, List<Map<String, String>>>();
     private Map<String, List<Map<String, String>>> dcmiFields = new HashMap<String, List<Map<String, String>>>();
 
@@ -71,14 +84,14 @@ public class DDM extends XMLFile
         if (this.profileFields.size() > 0)
         {
             Element profile = new Element("ddm:profile", DDM_NAMESPACE);
-            this.populateElement(profile, this.profileFields);
+            this.populateElement(profile, this.profileFields, DDM.profileOrder);
             ddm.appendChild(profile);
         }
 
         if (this.dcmiFields.size() > 0)
         {
             Element profile = new Element("ddm:dcmiMetadata", DDM_NAMESPACE);
-            this.populateElement(profile, this.dcmiFields);
+            this.populateElement(profile, this.dcmiFields, null);
             ddm.appendChild(profile);
         }
 
@@ -112,32 +125,51 @@ public class DDM extends XMLFile
         return ns;
     }
 
-    private void populateElement(Element element, Map<String, List<Map<String, String>>> register)
+    private void populateElement(Element element, Map<String, List<Map<String, String>>> register, List<String> order)
     {
-        for (String field : register.keySet())
+        if (order != null)
         {
-            String ns = this.getNamespace(field);
-
-            List<Map<String, String>> entries = register.get(field);
-            for (Map<String, String> entry : entries)
+            for (String field : order)
             {
-                Element el = new Element(field, ns);
-                for (String key : entry.keySet())
-                {
-                    String value = entry.get(key);
-                    if ("_value".equals(key))
-                    {
-                        el.appendChild(value);
-                    }
-                    else
-                    {
-                        String ans = this.getNamespace(key);
-                        Attribute attr = new Attribute(key, ans, value);
-                        el.addAttribute(attr);
-                    }
-                }
-                element.appendChild(el);
+                this.doField(element, register, field);
             }
+        }
+        else
+        {
+            for (String field : register.keySet())
+            {
+                this.doField(element, register, field);
+            }
+        }
+    }
+
+    private void doField(Element element, Map<String, List<Map<String, String>>> register, String field)
+    {
+        String ns = this.getNamespace(field);
+
+        List<Map<String, String>> entries = register.get(field);
+        if (entries == null)
+        {
+            return;
+        }
+        for (Map<String, String> entry : entries)
+        {
+            Element el = new Element(field, ns);
+            for (String key : entry.keySet())
+            {
+                String value = entry.get(key);
+                if ("_value".equals(key))
+                {
+                    el.appendChild(value);
+                }
+                else
+                {
+                    String ans = this.getNamespace(key);
+                    Attribute attr = new Attribute(key, ans, value);
+                    el.addAttribute(attr);
+                }
+            }
+            element.appendChild(el);
         }
     }
 }
