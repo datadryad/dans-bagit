@@ -1,12 +1,13 @@
 package org.datadryad.dansbagit;
 
 import java.io.*;
-import java.security.DigestInputStream;
-import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Iterator;
-import java.util.zip.ZipEntry;
 
+/**
+ * An Iterator which yields FileSegmentInputStream instances.  This is used to iterate through a
+ * large zip file in chunks.
+ */
 public class FileSegmentIterator implements Iterator<FileSegmentInputStream>
 {
     private RandomAccessFile raf = null;
@@ -14,8 +15,16 @@ public class FileSegmentIterator implements Iterator<FileSegmentInputStream>
     private long size = -1;
     private boolean md5 = false;
 
+    /**
+     * Create a new iterator around the given file, with segments of a given size.
+     *
+     * @param file  A file object to iterate over
+     * @param size  the size of the chunks each iteration will provide
+     * @param md5   whether to calculate the md5 as the chunks are created (has a performance overhead)
+     * @throws IOException if there are any problems reading the file
+     */
     public FileSegmentIterator(File file, long size, boolean md5)
-            throws Exception
+        throws IOException
     {
         this.raf = new RandomAccessFile(file, "r");
         this.raf.seek(0);
@@ -23,6 +32,11 @@ public class FileSegmentIterator implements Iterator<FileSegmentInputStream>
         this.md5 = md5;
     }
 
+    /**
+     * Is there another segment to be read?
+     *
+     * @return  true if there is another segment, false if not
+     */
     @Override
     public boolean hasNext()
 
@@ -37,6 +51,11 @@ public class FileSegmentIterator implements Iterator<FileSegmentInputStream>
         }
     }
 
+    /**
+     * Get the next input stream
+     *
+     * @return  an input stream for the next segment
+     */
     @Override
     public FileSegmentInputStream next()
     {
@@ -71,6 +90,11 @@ public class FileSegmentIterator implements Iterator<FileSegmentInputStream>
         return fsis2;
     }
 
+    /**
+     * Set the pointer to the appropriate place in the file
+     *
+     * @param point offset from the start of the file
+     */
     private void setFilePointer(long point)
     {
         try
@@ -83,12 +107,21 @@ public class FileSegmentIterator implements Iterator<FileSegmentInputStream>
         }
     }
 
+    /**
+     * Calculate the input stream for the input stream.  This will read from the stream, so you
+     * will need to reset the pointer after using this method
+     *
+     * @param fsis
+     * @return
+     */
     private String getMD5(InputStream fsis)
     {
         try
         {
-            // return org.apache.commons.codec.digest.DigestUtils.md5Hex(fsis);
             return Files.md5Hex(fsis);
+
+            // if we could use DigestUtils (which we can't because DSpace) this would be a better way
+            // return org.apache.commons.codec.digest.DigestUtils.md5Hex(fsis);
         }
         catch (IOException e)
         {

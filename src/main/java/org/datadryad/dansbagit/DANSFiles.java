@@ -1,13 +1,14 @@
 package org.datadryad.dansbagit;
 
-
-import nu.xom.Document;
 import nu.xom.Element;
 
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * XML class to represent the DANS files.xml format
+ */
 public class DANSFiles extends XMLFile
 {
     /** Namespace of the DC Terms metadata elements */
@@ -19,8 +20,16 @@ public class DANSFiles extends XMLFile
     /** The PREMIS namespace */
     private static String PREMIS_NAMESPACE = "http://www.loc.gov/standards/premis";
 
+    /** map of metadata linking file paths, to a set of key/value pairs */
     private Map<String, Map<String, String>> metadata = new HashMap<String, Map<String, String>>();
 
+    /**
+     * Add metadata about a file
+     *
+     * @param path  the file path the metadata concerns
+     * @param field     the metadata field to add
+     * @param value     the metadata value to add
+     */
     public void addFileMetadata(String path, String field, String value)
     {
         if (!this.metadata.containsKey(path)) {
@@ -31,6 +40,12 @@ public class DANSFiles extends XMLFile
         map.put(field, value);
     }
 
+    /**
+     * Convert the in-memory information to an XML string (suitable for then writing to file)
+     *
+     * @return  the XML as a string
+     * @throws IOException
+     */
     public String toXML()
             throws IOException
     {
@@ -60,11 +75,16 @@ public class DANSFiles extends XMLFile
             files.appendChild(fileEntry);
         }
 
-        // Document doc = new Document(files);
-        // return doc.toXML();
         return this.xml2String(files);
     }
 
+    /**
+     * Get the namespace for a given field.  The field should be prefixed with it's namespace, such as "dc:title"
+     * and the namespace needs to be one of those recognised by this class
+     *
+     * @param fieldName the field including namespace prefix
+     * @return  the namespace URI
+     */
     private String getNamespace(String fieldName)
     {
         if (fieldName.startsWith("dc:"))

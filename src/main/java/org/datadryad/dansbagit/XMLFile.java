@@ -7,8 +7,19 @@ import nu.xom.Serializer;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
+/**
+ * Parent XML class which provides features of use to other classes which work with XML
+ *
+ */
 public class XMLFile
 {
+    /**
+     * Convert the given element to an XML string
+     *
+     * @param element   the element
+     * @return  a string of the xml
+     * @throws IOException
+     */
     public String xml2String(Element element)
             throws IOException
     {

@@ -1,8 +1,8 @@
 package org.datadryad.dansbagit;
 
-import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.log4j.Logger;
 
 import java.io.*;
 import java.security.DigestInputStream;
@@ -44,6 +44,9 @@ import java.util.zip.ZipOutputStream;
  */
 public class DANSBag
 {
+    private static Logger log = Logger.getLogger(DANSBag.class);
+
+    /** Buffer size to be used when chunking through input streams */
     private static final int BUFFER = 8192;
 
     /**
@@ -84,65 +87,101 @@ public class DANSBag
     private Map<String, DIM> subDim = new HashMap<String, DIM>();
 
     /**
-     * Create a BagIt object around a directory specified at the zipPath
+     * Create a BagIt with the given name, using the provided zip as input or output, and with
+     * the given working directory for temporary storage
      *
-     * @param zipPath  Path to BagIt zip file.  This may exist or not.
-     * @param workingDir    Path to BagIt working directory, where files will be copied to in transition (especially during construction)
-     * @throws IOException
+     * @param name      name to use for the bag.  This will form the top level directory inside the zip
+     * @param zipPath   path to read in or output zip content
+     * @param workingDir    directory used for temporary storage
      */
     public DANSBag(String name, String zipPath, String workingDir)
-            throws IOException
     {
         this(name, new File(zipPath), new File(workingDir));
     }
 
     /**
-     * Create a BagIt object around a file object provided
+     * Create a BagIt with the given name, using the provided zip as input or output, and with
+     * the given working directory for temporary storage
      *
-     * @param zipFile  File object representing the BagIt zip.  This may exist or not
-     * @param workingDir  File object representing the BagIt structure
-     * @throws IOException
+     * @param name      name to use for the bag.  This will form the top level directory inside the zip
+     * @param zipFile  path to read in or output zip content
+     * @param workingDir    directory used for temporary storage
      */
     public DANSBag(String name, File zipFile, File workingDir)
-            throws IOException
     {
         this.zipFile = zipFile;
         this.workingDir = workingDir;
         this.name = name;
+        log.debug("Creating DANSBag object around zipfile " + zipFile.getAbsolutePath() + " using working directory " + workingDir.getAbsolutePath() + " with name " + name);
 
         if (zipFile.exists())
         {
+            log.debug("Zipfile " + zipFile.getAbsolutePath() + " exists, loading data from there");
             // load the bag
             this.loadBag(zipFile);
         }
     }
 
+    /**
+     * Load state from the given zip file
+     *
+     * Not yet implemented
+     *
+     * @param file
+     */
     public void loadBag(File file)
-            throws IOException
     {
         // TODO
     }
 
+    /**
+     * Get the full path to the working directory
+     *
+     * @return path to the working directory
+     */
     public String getWorkingDir()
     {
         return this.workingDir.getAbsolutePath();
     }
 
+    /**
+     * Get the MD5 of the zip.  The zip must exist for this to happen, so you either need to have
+     * created this object around a zip file, or have called writeFile first.  If you try to call
+     * it otherwise, you will get a RuntimeException
+     *
+     * @return  the MD5 hex string for the zip file
+     * @throws IOException  if there's a problem reading the file
+     */
     public String getMD5()
-            throws Exception
+        throws IOException
     {
         if (!this.zipFile.exists())
         {
             throw new RuntimeException("You must writeFile before you can calculate the md5");
         }
 
-        FileInputStream fis = new FileInputStream(this.zipFile);
-        // String md5 = DigestUtils.md5Hex(fis);
-        String md5 = Files.md5Hex(fis);
-        fis.close();
-        return md5;
+        try
+        {
+            FileInputStream fis = new FileInputStream(this.zipFile);
+            String md5 = Files.md5Hex(fis);
+            fis.close();
+            return md5;
+
+            // if we could use DigestUtils (which we can't because DSpace) this would be quicker and cleaner this way
+            // String md5 = DigestUtils.md5Hex(fis);
+        }
+        catch(NoSuchAlgorithmException e)
+        {
+            // this shouldn't happen
+            throw new RuntimeException(e);
+        }
     }
 
+    /**
+     * Get the name of the zip file.  You can only do this once the zip file exists, otherwise you will get a RuntimeException
+     *
+     * @return  the name of the zip file
+     */
     public String getZipName()
     {
         if (!this.zipFile.exists())
@@ -152,6 +191,11 @@ public class DANSBag
         return this.zipFile.getName();
     }
 
+    /**
+     * Get the full path to the zip file.  You can only do this once the zip file exists, otherwise you will get a RuntimeException
+     *
+     * @return the full path to the zip file
+     */
     public String getZipPath()
     {
         if (!this.zipFile.exists())
@@ -161,28 +205,65 @@ public class DANSBag
         return this.zipFile.getAbsolutePath();
     }
 
+    /**
+     * Get an input stream for the entire zip file.  You can only do this once the zip file exists, otherwise you will get a RuntimeException
+     *
+     * @return an input stream from which you can retrieve the entire zip file
+     *
+     * @throws Exception
+     */
     public InputStream getInputStream()
-            throws Exception
     {
         if (!this.zipFile.exists())
         {
             throw new RuntimeException("You must writeFile before you can read the input stream");
         }
 
-        return new FileInputStream(this.zipFile);
+        try
+        {
+            return new FileInputStream(this.zipFile);
+        }
+        catch (FileNotFoundException e)
+        {
+            // this can't happen, as we've already checked
+            throw new RuntimeException(e);
+        }
     }
 
+    /**
+     * Get an iterator which will allow you to iterate over input streams for defined size chunks of the zip file.
+     *
+     * You can only do this once the zip file exists, otherwise you will get a RuntimeException
+     *
+     * @param size  the size (in bytes) of the chunks (all except the final chunk will be this size)
+     * @param md5   whether to calculate the md5 of each chunk as it is read
+     * @return  a file segment iterator which can be used to retrieve input streams for subsequent chunks
+     * @throws Exception
+     */
     public FileSegmentIterator getSegmentIterator(long size, boolean md5)
-            throws Exception
     {
         if (!this.zipFile.exists())
         {
             throw new RuntimeException("You must writeFile before you can read the segments");
         }
 
-        return new FileSegmentIterator(this.zipFile, size, md5);
+        try
+        {
+            return new FileSegmentIterator(this.zipFile, size, md5);
+        }
+        catch (IOException e)
+        {
+            // shouldn't happen, as we have checked the file's existence already
+            throw new RuntimeException(e);
+        }
+
     }
 
+    /**
+     * How big is the zip file.  You can only do this once the zip file exists, otherwise you will get a RuntimeException
+     *
+     * @return size of zip file in bytes
+     */
     public long size()
     {
         if (!this.zipFile.exists())
@@ -192,17 +273,33 @@ public class DANSBag
         return this.zipFile.length();
     }
 
+    /**
+     * Add a bitstream to the bag.  This will stage the file in the working directory.
+     *
+     * @param is    input stream where the bitstream can be read from
+     * @param filename  the filename
+     * @param format    the mimetype of the file
+     * @param description   a description of the file
+     * @param dataFileIdent     an identifier for the data file to which this bitstream belongs
+     * @param bundle    the DSpace bundle the bitstream came from
+     * @throws IOException
+     */
     public void addBitstream(InputStream is, String filename, String format, String description, String dataFileIdent, String bundle)
         throws IOException
     {
+        log.info("Adding bitstream to DANSBag: filename= " + filename + "; format= " + format + "; data_file=" + dataFileIdent + "; bundle=" + bundle);
+
         // escape the dataFileIdent
         String dataFilename = Files.sanitizeFilename(dataFileIdent);
+        log.debug("Sanitised dataFileIdent from " + dataFileIdent + " to " + dataFilename);
 
         // get the correct folder/filename for the bitstream
         String internalDir = "data" + File.separator + dataFilename + File.separator + bundle;
         String internalFile = internalDir + File.separator + filename;
         String targetDir = this.workingDir.getAbsolutePath() + File.separator + internalDir;
         String filePath = targetDir + File.separator + filename;
+        log.info("Bistream will be temporarily staged at " + filePath);
+        log.info("Bitstream will be written to internal zip path " + internalFile);
 
         // ensure that the target directory exists
         (new File(targetDir)).mkdirs();
@@ -236,22 +333,44 @@ public class DANSBag
         this.fileRefs.add(bfr);
     }
 
+    /**
+     * Set the DDM metdata object for this bag
+     *
+     * @param ddm
+     */
     public void setDDM(DDM ddm)
     {
         this.ddm = ddm;
     }
 
+    /**
+     * Set the dataset DIM metadata for this bag
+     *
+     * @param dim
+     */
     public void setDatasetDIM(DIM dim)
     {
         this.dim = dim;
     }
 
+    /**
+     * Set the data file DIM metadata for the given data file identifier
+     *
+     * @param dim
+     * @param dataFileIdent     the identifier for the data file
+     */
     public void addDatafileDIM(DIM dim, String dataFileIdent)
     {
         this.subDim.put(dataFileIdent, dim);
     }
 
-
+    /**
+     * Write the in-memory information and contents of the working directory to the zip file.
+     *
+     * You can only do this once, and it will refuse to run again if the zip file is already present.  If you want to
+     * run it again in the same thread you'll need to call cleanupZip first.  Also, you shouldn't need to do that - only
+     * call this when you have finished assembling the bag.
+     */
     public void writeToFile()
     {
         try
@@ -259,8 +378,11 @@ public class DANSBag
             // if this bag was initialised from a zip file, we can't write back to it - just too
             // complicated.
             if (this.zipFile.exists()) {
+                log.error("Attempt to write bag when zip already exists");
                 throw new RuntimeException("Cannot re-write a modified bag file.  You should either create a new bag file from the source files, or read in the old zip file and pass the components in here.");
             }
+
+            log.info("Writing bag to file " + this.zipFile.getAbsolutePath());
 
             String base = Files.sanitizeFilename(this.name);
 
@@ -389,20 +511,29 @@ public class DANSBag
         }
     }
 
-
+    /**
+     * Clean out any cached data in the working directory
+     *
+     * @throws IOException
+     */
     public void cleanupWorkingDir()
             throws IOException
     {
         if (this.workingDir.exists())
         {
+            log.debug("Cleaning up working directory " + this.workingDir.getAbsolutePath());
             FileUtils.deleteDirectory(this.workingDir);
         }
     }
 
+    /**
+     * Delete the zip file
+     */
     public void cleanupZip()
     {
         if (this.zipFile.exists())
         {
+            log.debug("Cleaning up zip file " + this.zipFile.getAbsolutePath());
             this.zipFile.delete();
         }
     }
@@ -414,12 +545,11 @@ public class DANSBag
      * @param path  The path within the zip file to store a copy of the file
      * @param out   The ZipOutputStream to write the file to
      * @return  The MD5 digest of the file
-     * @throws FileNotFoundException
      * @throws IOException
      * @throws NoSuchAlgorithmException
      */
     private String writeToZip(File file, String path, ZipOutputStream out)
-            throws FileNotFoundException, IOException, NoSuchAlgorithmException
+            throws IOException, NoSuchAlgorithmException
     {
         FileInputStream fi = new FileInputStream(file);
         return this.writeToZip(fi, path, out);
@@ -432,12 +562,11 @@ public class DANSBag
      * @param path  The path within the zip file to store the resulting text file
      * @param out   The ZipOutputStream to write the file to
      * @return  The MD5 digest of the resulting text file
-     * @throws FileNotFoundException
      * @throws IOException
      * @throws NoSuchAlgorithmException
      */
     private String writeToZip(String str, String path, ZipOutputStream out)
-            throws FileNotFoundException, IOException, NoSuchAlgorithmException
+            throws IOException, NoSuchAlgorithmException
     {
         ByteArrayInputStream bais = new ByteArrayInputStream(str.getBytes());
         return this.writeToZip(bais, path, out);

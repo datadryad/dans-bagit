@@ -1,7 +1,6 @@
 package org.datadryad.dansbagit;
 
 import nu.xom.Attribute;
-import nu.xom.Document;
 import nu.xom.Element;
 
 import java.io.IOException;
@@ -10,12 +9,24 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * XML class representing the DIM (DSpace Internal Metadata) format
+ */
 public class DIM extends XMLFile
 {
     private static String DIM_NAMESPACE = "http://www.dspace.org/xmlns/dspace/dim";
 
+    /**
+     * A list of fields and their values
+     */
     private List<Map<String, String>> fields = new ArrayList<Map<String, String>>();
 
+    /**
+     * Add a new field with the given value
+     *
+     * @param field the field
+     * @param value the value
+     */
     public void addDSpaceField(String field, String value)
     {
         String[] bits = field.split("\\.");
@@ -35,6 +46,14 @@ public class DIM extends XMLFile
         this.addField(schema, element, qualifier, value);
     }
 
+    /**
+     * Add a field with the given schema, element, qualifier and value
+     *
+     * @param schema
+     * @param element
+     * @param qualifier
+     * @param value
+     */
     public void addField(String schema, String element, String qualifier, String value)
     {
         Map<String, String> entry = new HashMap<String, String>();
@@ -45,6 +64,12 @@ public class DIM extends XMLFile
         this.fields.add(entry);
     }
 
+    /**
+     * Convert the in-memory metadata to an XML string
+     *
+     * @return  an xml string
+     * @throws IOException
+     */
     public String toXML()
             throws IOException
     {
@@ -73,8 +98,6 @@ public class DIM extends XMLFile
             dim.appendChild(field);
         }
 
-        //Document doc = new Document(dim);
-        //return doc.toXML();
         return this.xml2String(dim);
     }
 }

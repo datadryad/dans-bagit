@@ -1,18 +1,17 @@
 package org.datadryad.dansbagit;
 
 import nu.xom.Attribute;
-import nu.xom.Document;
 import nu.xom.Element;
-import nu.xom.Serializer;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Class to represent XML in the DANS DDM format
+ */
 public class DDM extends XMLFile
 {
     private static String DC_NAMESPACE = "http://purl.org/dc/elements/1.1/";
@@ -22,6 +21,9 @@ public class DDM extends XMLFile
     private static String XSI_NAMESPACE = "http://www.w3.org/2001/XMLSchema-instance";
     private static String ID_NAMESPACE = "http://easy.dans.knaw.nl/schemas/vocab/identifier-type/";
 
+    /**
+     * A map of namespaces to prefixes
+     */
     private static final Map<String, String> nsMap;
     static
     {
@@ -34,6 +36,9 @@ public class DDM extends XMLFile
         nsMap.put("id-type", ID_NAMESPACE);
     }
 
+    /**
+     * The order in which fields should appear in the profile section of the XML
+     */
     private static final List<String> profileOrder;
     static
     {
@@ -47,29 +52,64 @@ public class DDM extends XMLFile
         profileOrder.add("ddm:accessRights");
     }
 
+    /** profile values */
     private Map<String, List<Map<String, String>>> profileFields = new HashMap<String, List<Map<String, String>>>();
+
+    /** dcmi values */
     private Map<String, List<Map<String, String>>> dcmiFields = new HashMap<String, List<Map<String, String>>>();
 
+    /**
+     * Add a field to the profile section of the document
+     *
+     * @param field the profile field
+     * @param value the value of the field
+     */
     public void addProfileField(String field, String value)
     {
         this.addProfileField(field, value, null);
     }
 
+    /**
+     * Add a field to the profile section of the document, with the associated attributes
+     *
+     * @param field the profile field
+     * @param value the value of the fields
+     * @param attrs a map of attributes and their values
+     */
     public void addProfileField(String field, String value, Map<String, String> attrs)
     {
         this.addToRegister(this.profileFields, field, value, attrs);
     }
 
+    /**
+     * Add a field to the dcmi section of the document
+     *
+     * @param field the dcmi field
+     * @param value the value of the field
+     */
     public void addDCMIField(String field, String value)
     {
         this.addDCMIField(field, value, null);
     }
 
+    /**
+     * Add a field to the dcmi section of the document with the associated attributes
+     *
+     * @param field the dcmi field
+     * @param value the value fo the field
+     * @param attrs a map of attributes and their values
+     */
     public void addDCMIField(String field, String value, Map<String, String> attrs)
     {
         this.addToRegister(this.dcmiFields, field, value, attrs);
     }
 
+    /**
+     * Serialise the DDM as an XML string
+     *
+     * @return  the xml string
+     * @throws IOException
+     */
     public String toXML()
             throws IOException
     {
@@ -96,10 +136,16 @@ public class DDM extends XMLFile
         }
 
         return this.xml2String(ddm);
-        // Document doc = new Document(ddm);
-        // return doc.toXML();
     }
 
+    /**
+     * Add a field, with its value and attributes to the specified internal metadata register
+     *
+     * @param register  the internal metadata register
+     * @param field the field
+     * @param value the value
+     * @param attrs a map of attributes
+     */
     private void addToRegister(Map<String, List<Map<String, String>>> register, String field, String value, Map<String, String> attrs)
     {
         if (!register.containsKey(field))
@@ -118,6 +164,13 @@ public class DDM extends XMLFile
         fieldList.add(entry);
     }
 
+    /**
+     * Get the namespace for a given field.  The field should be prefixed with it's namespace, such as "dc:title"
+     * and the namespace needs to be one of those recognised by this class
+     *
+     * @param field the field including namespace prefix
+     * @return  the namespace URI
+     */
     private String getNamespace(String field)
     {
         String[] bits = field.split(":");
@@ -125,6 +178,13 @@ public class DDM extends XMLFile
         return ns;
     }
 
+    /**
+     * Populate an element with the values from the given internal metadata register
+     *
+     * @param element
+     * @param register
+     * @param order
+     */
     private void populateElement(Element element, Map<String, List<Map<String, String>>> register, List<String> order)
     {
         if (order != null)
@@ -143,6 +203,13 @@ public class DDM extends XMLFile
         }
     }
 
+    /**
+     * Add the field from the internal metadata register to the specified element
+     *
+     * @param element
+     * @param register
+     * @param field
+     */
     private void doField(Element element, Map<String, List<Map<String, String>>> register, String field)
     {
         String ns = this.getNamespace(field);
