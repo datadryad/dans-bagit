@@ -78,11 +78,25 @@ public class FileSegmentIterator implements Iterator<FileSegmentInputStream>
             this.setFilePointer(this.pointer);
         }
 
+        long contentLength = this.size;
+        try
+        {
+            if (this.pointer + this.size > this.raf.length())
+            {
+                contentLength = this.raf.length() - this.pointer;
+            }
+        }
+        catch (IOException e)
+        {
+            throw new RuntimeException(e);
+        }
+
         // then move the pointer for next time
         this.pointer += this.size;
 
         // now construct the input stream
         FileSegmentInputStream fsis2 = new FileSegmentInputStream(this.raf, this.size);
+        fsis2.setContentLength(contentLength);
         if (!"".equals(checksum))
         {
             fsis2.setMd5(checksum);

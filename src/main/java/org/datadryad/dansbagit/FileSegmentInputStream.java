@@ -14,6 +14,7 @@ public class FileSegmentInputStream extends InputStream
     private long pointer = 0;
     private boolean eof = false;
     private String md5;
+    private long contentLength = -1;
 
     /**
      * Create the input stream around a random access file object.  The file object should already be seeked to the
@@ -46,6 +47,16 @@ public class FileSegmentInputStream extends InputStream
     public void setMd5(String md5)
     {
         this.md5 = md5;
+    }
+
+    public long getContentLength()
+    {
+        return this.contentLength;
+    }
+
+    public void setContentLength(long contentLength)
+    {
+        this.contentLength = contentLength;
     }
 
     /**
