@@ -1,5 +1,6 @@
 package org.datadryad.dansbagit;
 
+import nu.xom.Attribute;
 import nu.xom.Element;
 
 import java.io.IOException;
@@ -57,6 +58,8 @@ public class DANSFiles extends XMLFile
         for (String path : this.metadata.keySet())
         {
             Element fileEntry = new Element("file");
+            Attribute pathAttr = new Attribute("filepath", path);
+            fileEntry.addAttribute(pathAttr);
 
             Map<String, String> fields = this.metadata.get(path);
             for (String field : fields.keySet())

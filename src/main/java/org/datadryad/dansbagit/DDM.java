@@ -52,6 +52,18 @@ public class DDM extends XMLFile
         profileOrder.add("ddm:accessRights");
     }
 
+    private static final Map<String, List<Map<String, String>>> profileDefaults;
+    static
+    {
+        profileDefaults = new HashMap<String, List<Map<String, String>>>();
+
+        List<Map<String, String>> available = new ArrayList<Map<String, String>>();
+        Map<String, String> val = new HashMap<String, String>();
+        val.put("_value", "2099-12-31T23:59:59+0000");
+        available.add(val);
+        profileDefaults.put("ddm:available", available);
+    }
+
     /** profile values */
     private Map<String, List<Map<String, String>>> profileFields = new HashMap<String, List<Map<String, String>>>();
 
@@ -124,14 +136,14 @@ public class DDM extends XMLFile
         if (this.profileFields.size() > 0)
         {
             Element profile = new Element("ddm:profile", DDM_NAMESPACE);
-            this.populateElement(profile, this.profileFields, DDM.profileOrder);
+            this.populateElement(profile, this.profileFields, DDM.profileOrder, DDM.profileDefaults);
             ddm.appendChild(profile);
         }
 
         if (this.dcmiFields.size() > 0)
         {
             Element profile = new Element("ddm:dcmiMetadata", DDM_NAMESPACE);
-            this.populateElement(profile, this.dcmiFields, null);
+            this.populateElement(profile, this.dcmiFields, null, null);
             ddm.appendChild(profile);
         }
 
@@ -185,20 +197,24 @@ public class DDM extends XMLFile
      * @param register
      * @param order
      */
-    private void populateElement(Element element, Map<String, List<Map<String, String>>> register, List<String> order)
+    private void populateElement(Element element, Map<String, List<Map<String, String>>> register, List<String> order, Map<String, List<Map<String, String>>> defaults)
     {
+        if (defaults == null)
+        {
+            defaults = new HashMap<String, List<Map<String, String>>>();
+        }
         if (order != null)
         {
             for (String field : order)
             {
-                this.doField(element, register, field);
+                this.doField(element, register, field, defaults.get(field));
             }
         }
         else
         {
             for (String field : register.keySet())
             {
-                this.doField(element, register, field);
+                this.doField(element, register, field, defaults.get(field));
             }
         }
     }
@@ -210,15 +226,23 @@ public class DDM extends XMLFile
      * @param register
      * @param field
      */
-    private void doField(Element element, Map<String, List<Map<String, String>>> register, String field)
+    private void doField(Element element, Map<String, List<Map<String, String>>> register, String field, List<Map<String, String>> def)
     {
         String ns = this.getNamespace(field);
 
         List<Map<String, String>> entries = register.get(field);
         if (entries == null)
         {
-            return;
+            if (def != null)
+            {
+                entries = def;
+            }
+            else
+            {
+                return;
+            }
         }
+
         for (Map<String, String> entry : entries)
         {
             Element el = new Element(field, ns);

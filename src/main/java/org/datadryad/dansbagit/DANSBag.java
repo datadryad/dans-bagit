@@ -3,16 +3,13 @@ package org.datadryad.dansbagit;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
-import sun.plugin2.message.Message;
 
 import java.io.*;
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.text.SimpleDateFormat;
+import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -60,6 +57,7 @@ public class DANSBag
         public ZipEntry zipEntry = null;
         private File file = null;
 
+        public String filename = null;
         public String fullPath = null;
         public String internalPath = null;
 
@@ -327,6 +325,7 @@ public class DANSBag
 
         // add the bitstream information to our internal data structure
         BagFileReference bfr = new BagFileReference();
+        bfr.filename = filename;
         bfr.fullPath = filePath;
         bfr.internalPath = internalFile;
         bfr.md5 = Files.digestToString(mdmd5);
@@ -408,18 +407,21 @@ public class DANSBag
             // write the bitstreams, and gather their metadata for the tag files as we go through
             for (BagFileReference bfr : this.fileRefs)
             {
+                // add the filename to the files.xml metadata
+                dfs.addFileMetadata(bfr.internalPath, "dcterms:title", bfr.filename);
+
                 // update description tag file contents
                 if (bfr.description != null && !"".equals(bfr.description))
                 {
                     descriptions = descriptions + bfr.description + "\t" + bfr.internalPath + "\n";
-                    dfs.addFileMetadata(bfr.internalPath, "dc:description", bfr.description);
+                    dfs.addFileMetadata(bfr.internalPath, "dcterms:description", bfr.description);
                 }
 
                 // update format tag file contents
                 if (bfr.format != null && !"".equals(bfr.format))
                 {
                     formats = formats + bfr.format + "\t" + bfr.internalPath + "\n";
-                    dfs.addFileMetadata(bfr.internalPath, "dc:format", bfr.format);
+                    dfs.addFileMetadata(bfr.internalPath, "dcterms:format", bfr.format);
                 }
 
                 // update size tag file contents
@@ -433,15 +435,15 @@ public class DANSBag
                 if (bfr.md5 != null && !"".equals(bfr.md5))
                 {
                     md5Manifest = md5Manifest + bfr.md5 + "\t" + bfr.internalPath + "\n";
-                    dfs.addFileMetadata(bfr.internalPath, "premis:messageDigestAlgorithm", "MD5");
-                    dfs.addFileMetadata(bfr.internalPath, "premis:messageDigest", bfr.md5);
+                    //dfs.addFileMetadata(bfr.internalPath, "premis:messageDigestAlgorithm", "MD5");
+                    //dfs.addFileMetadata(bfr.internalPath, "premis:messageDigest", bfr.md5);
                 }
 
                 if (bfr.sha1 != null && !"".equals(bfr.sha1))
                 {
                     sha1Manifest = sha1Manifest + bfr.sha1 + "\t" + bfr.internalPath + "\n";
-                    dfs.addFileMetadata(bfr.internalPath, "premis:messageDigestAlgorithm", "MD5");
-                    dfs.addFileMetadata(bfr.internalPath, "premis:messageDigest", bfr.md5);
+                    //dfs.addFileMetadata(bfr.internalPath, "premis:messageDigestAlgorithm", "MD5");
+                    //dfs.addFileMetadata(bfr.internalPath, "premis:messageDigest", bfr.md5);
                 }
 
                 this.writeToZip(bfr.getFile(), base + "/" + bfr.internalPath, out);
@@ -513,6 +515,14 @@ public class DANSBag
             String bagitfile = "BagIt-Version: 0.97\nTag-File-Character-Encoding: UTF-8";
             Map<String, String> bagitChecksums = this.writeToZip(bagitfile, base + "/bagit.txt", out);
             tagmanifest = tagmanifest + bagitChecksums.get("md5") + "\tbagit.txt" + "\n";
+
+            // write the bag-info.txt
+            Date now = new Date();
+            SimpleDateFormat sdf = new SimpleDateFormat("YYYY-MM-dd'T'HH:mm:ssX");
+            String createdDate = sdf.format(now);
+            String baginfofile = "Created: " + createdDate;
+            Map<String, String> baginfoChecksums = this.writeToZip(baginfofile, base + "/bag-info.txt", out);
+            tagmanifest = tagmanifest + baginfoChecksums.get("md5") + "\tbag-info.txt" + "\n";
 
             // finally write the tag manifest
             if (!"".equals(tagmanifest))
