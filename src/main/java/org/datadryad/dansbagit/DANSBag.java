@@ -3,6 +3,7 @@ package org.datadryad.dansbagit;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
+import sun.plugin2.message.Message;
 
 import java.io.*;
 import java.security.DigestInputStream;
@@ -66,6 +67,7 @@ public class DANSBag
         public String format = null;
         public long size = -1;
         public String md5 = null;
+        public String sha1 = null;
         public String dataFileIdent = null;
         public String bundle = null;
 
@@ -305,16 +307,19 @@ public class DANSBag
         (new File(targetDir)).mkdirs();
 
         // wrap the input stream in something that can get the MD5 as we read it
-        MessageDigest md = null;
+        MessageDigest mdmd5 = null;
+        MessageDigest mdsha1 = null;
         try
         {
-            md = MessageDigest.getInstance("MD5");
+            mdmd5 = MessageDigest.getInstance("MD5");
+            mdsha1 = MessageDigest.getInstance("SHA-1");
         }
         catch (NoSuchAlgorithmException e)
         {
             throw new RuntimeException(e);
         }
-        DigestInputStream dis = new DigestInputStream(is, md);
+        DigestInputStream inner = new DigestInputStream(is, mdmd5);
+        DigestInputStream dis = new DigestInputStream(inner, mdsha1);
 
         // write the input stream to the working directory, in the appropriate folder
         OutputStream os = new FileOutputStream(filePath);
@@ -324,7 +329,8 @@ public class DANSBag
         BagFileReference bfr = new BagFileReference();
         bfr.fullPath = filePath;
         bfr.internalPath = internalFile;
-        bfr.md5 = Files.digestToString(md);
+        bfr.md5 = Files.digestToString(mdmd5);
+        bfr.sha1 = Files.digestToString(mdsha1);
         bfr.description = description;
         bfr.format = format;
         bfr.size = (new File(filePath)).length();
@@ -393,7 +399,8 @@ public class DANSBag
             String descriptions = "";
             String formats = "";
             String sizes = "";
-            String manifest = "";
+            String md5Manifest = "";
+            String sha1Manifest = "";
             String tagmanifest = "";
 
             DANSFiles dfs = new DANSFiles();
@@ -422,10 +429,17 @@ public class DANSBag
                     dfs.addFileMetadata(bfr.internalPath, "dcterms:extent", Long.toString(bfr.size));
                 }
 
-                // update the manifest
+                // update the manifests
                 if (bfr.md5 != null && !"".equals(bfr.md5))
                 {
-                    manifest = manifest + bfr.md5 + "\t" + bfr.internalPath + "\n";
+                    md5Manifest = md5Manifest + bfr.md5 + "\t" + bfr.internalPath + "\n";
+                    dfs.addFileMetadata(bfr.internalPath, "premis:messageDigestAlgorithm", "MD5");
+                    dfs.addFileMetadata(bfr.internalPath, "premis:messageDigest", bfr.md5);
+                }
+
+                if (bfr.sha1 != null && !"".equals(bfr.sha1))
+                {
+                    sha1Manifest = sha1Manifest + bfr.sha1 + "\t" + bfr.internalPath + "\n";
                     dfs.addFileMetadata(bfr.internalPath, "premis:messageDigestAlgorithm", "MD5");
                     dfs.addFileMetadata(bfr.internalPath, "premis:messageDigest", bfr.md5);
                 }
@@ -434,21 +448,22 @@ public class DANSBag
             }
 
             // write the DANS files.xml document
-            String filesChecksum = this.writeToZip(dfs.toXML(), base + "/metadata/files.xml", out);
-            tagmanifest = tagmanifest + filesChecksum + "\t" + "metadata/files.xml" + "\n";
+            Map<String, String> filesChecksums = this.writeToZip(dfs.toXML(), base + "/metadata/files.xml", out);
+            tagmanifest = tagmanifest + filesChecksums.get("md5") + "\t" + "metadata/files.xml" + "\n";
 
             // write the DANS dataset.xml document
             if (this.ddm != null)
             {
-                String datasetChecksum = this.writeToZip(this.ddm.toXML(), base + "/metadata/dataset.xml", out);
-                tagmanifest = tagmanifest + datasetChecksum + "\t" + "metadata/dataset.xml" + "\n";
+                Map<String, String> datasetChecksums = this.writeToZip(this.ddm.toXML(), base + "/metadata/dataset.xml", out);
+                tagmanifest = tagmanifest + datasetChecksums.get("md5") + "\t" + "metadata/dataset.xml" + "\n";
             }
 
             // write the primary dim file
             if (this.dim != null)
             {
-                String dimChecksum = this.writeToZip(this.dim.toXML(), base + "/data/metadata.xml", out);
-                manifest = manifest + dimChecksum + "\t" + "data/metadata.xml" + "\n";
+                Map<String, String> dimChecksums = this.writeToZip(this.dim.toXML(), base + "/data/metadata.xml", out);
+                md5Manifest = md5Manifest + dimChecksums.get("md5") + "\t" + "data/metadata.xml" + "\n";
+                sha1Manifest = sha1Manifest + dimChecksums.get("sha-1") + "\t" + "data/metadata.xml" + "\n";
             }
 
             // write the datafile dim files
@@ -457,40 +472,47 @@ public class DANSBag
                 String dataDir = Files.sanitizeFilename(ident);
                 String zipPath = "data/" + dataDir + "/metadata.xml";
                 DIM dim = this.subDim.get(ident);
-                String subDimChecksum = this.writeToZip(dim.toXML(), base + "/" + zipPath, out);
-                manifest = manifest + subDimChecksum + "\t" + zipPath + "\n";
+                Map<String, String> subDimChecksums = this.writeToZip(dim.toXML(), base + "/" + zipPath, out);
+                md5Manifest = md5Manifest + subDimChecksums.get("md5") + "\t" + zipPath + "\n";
+                sha1Manifest = sha1Manifest + subDimChecksums.get("sha-1") + "\t" + zipPath + "\n";
             }
 
             // write the custom tag files
             if (!"".equals(descriptions))
             {
-                String checksum = this.writeToZip(descriptions, base + "/bitstream-description.txt", out);
-                tagmanifest = tagmanifest + checksum + "\tbitstream-description.txt" + "\n";
+                Map<String, String> checksums = this.writeToZip(descriptions, base + "/bitstream-description.txt", out);
+                tagmanifest = tagmanifest + checksums.get("md5") + "\tbitstream-description.txt" + "\n";
             }
 
             if (!"".equals(formats))
             {
-                String checksum = this.writeToZip(formats, base + "/bitstream-format.txt", out);
-                tagmanifest = tagmanifest + checksum + "\tbitstream-format.txt" + "\n";
+                Map<String, String> checksums = this.writeToZip(formats, base + "/bitstream-format.txt", out);
+                tagmanifest = tagmanifest + checksums.get("md5") + "\tbitstream-format.txt" + "\n";
             }
 
             if (!"".equals(sizes))
             {
-                String checksum = this.writeToZip(sizes, base + "/bitstream-size.txt", out);
-                tagmanifest = tagmanifest + checksum + "\tbitstream-size.txt" + "\n";
+                Map<String, String> checksums = this.writeToZip(sizes, base + "/bitstream-size.txt", out);
+                tagmanifest = tagmanifest + checksums.get("md5") + "\tbitstream-size.txt" + "\n";
             }
 
             // write the checksum manifests
-            if (!"".equals(manifest))
+            if (!"".equals(md5Manifest))
             {
-                String manifestChecksum = this.writeToZip(manifest, base + "/manifest-md5.txt", out);
-                tagmanifest = tagmanifest + manifestChecksum + "\tmanifest-md5.txt" + "\n";
+                Map<String, String> manifestChecksums = this.writeToZip(md5Manifest, base + "/manifest-md5.txt", out);
+                tagmanifest = tagmanifest + manifestChecksums.get("md5") + "\tmanifest-md5.txt" + "\n";
+            }
+
+            if (!"".equals(sha1Manifest))
+            {
+                Map<String, String> manifestChecksums = this.writeToZip(sha1Manifest, base + "/manifest-sha1.txt", out);
+                tagmanifest = tagmanifest + manifestChecksums.get("md5") + "\tmanifest-sha1.txt" + "\n";
             }
 
             // write the bagit.txt
             String bagitfile = "BagIt-Version: 0.97\nTag-File-Character-Encoding: UTF-8";
-            String bagitChecksum = this.writeToZip(bagitfile, base + "/bagit.txt", out);
-            tagmanifest = tagmanifest + bagitChecksum + "\tbagit.txt" + "\n";
+            Map<String, String> bagitChecksums = this.writeToZip(bagitfile, base + "/bagit.txt", out);
+            tagmanifest = tagmanifest + bagitChecksums.get("md5") + "\tbagit.txt" + "\n";
 
             // finally write the tag manifest
             if (!"".equals(tagmanifest))
@@ -548,7 +570,7 @@ public class DANSBag
      * @throws IOException
      * @throws NoSuchAlgorithmException
      */
-    private String writeToZip(File file, String path, ZipOutputStream out)
+    private Map<String, String> writeToZip(File file, String path, ZipOutputStream out)
             throws IOException, NoSuchAlgorithmException
     {
         FileInputStream fi = new FileInputStream(file);
@@ -565,7 +587,7 @@ public class DANSBag
      * @throws IOException
      * @throws NoSuchAlgorithmException
      */
-    private String writeToZip(String str, String path, ZipOutputStream out)
+    private Map<String, String> writeToZip(String str, String path, ZipOutputStream out)
             throws IOException, NoSuchAlgorithmException
     {
         ByteArrayInputStream bais = new ByteArrayInputStream(str.getBytes());
@@ -581,12 +603,14 @@ public class DANSBag
      * @throws IOException
      * @throws NoSuchAlgorithmException
      */
-    private String writeToZip(InputStream fi, String path, ZipOutputStream out)
+    private Map<String, String> writeToZip(InputStream fi, String path, ZipOutputStream out)
             throws IOException, NoSuchAlgorithmException
     {
-        MessageDigest md = MessageDigest.getInstance("MD5");
+        MessageDigest mdmd5 = MessageDigest.getInstance("MD5");
+        MessageDigest mdsha1 = MessageDigest.getInstance("SHA-1");
         BufferedInputStream origin = new BufferedInputStream(fi, BUFFER);
-        DigestInputStream dis = new DigestInputStream(origin, md);
+        DigestInputStream inner = new DigestInputStream(origin, mdmd5);
+        DigestInputStream dis = new DigestInputStream(inner, mdsha1);
 
         ZipEntry entry = new ZipEntry(path);
         out.putNextEntry(entry);
@@ -597,6 +621,12 @@ public class DANSBag
         }
         origin.close();
 
-        return Files.digestToString(md);
+        String md5hex = Files.digestToString(mdmd5);
+        String sha1hex = Files.digestToString(mdsha1);
+
+        Map<String, String> ret = new HashMap<String, String>();
+        ret.put("md5", md5hex);
+        ret.put("sha-1", sha1hex);
+        return ret;
     }
 }
