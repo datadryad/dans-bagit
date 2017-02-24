@@ -1,17 +1,10 @@
 # BagIt wrapper library for Dryad/DANS Bag Profile
 
-## Introduction
+This module provides all the low-level BagIt handling functions to assemble a compliant package to deliver to
+ DANS.
+ 
+ 
+* For build instructions see docs/BUILD.md
+* For details about the BagIt structure used with DANS see docs/BAG.md
+* For details on usage of this library see docs/USAGE.md
 
-TODO
-
-## Build/Install
-
-    git clone https://github.com/datadryad/dans-bagit.git
-
-then in the resulting directory:
-
-    mvn clean package
-
-to install into your local maven repository just use:
-
-    mvn install
