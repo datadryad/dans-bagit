@@ -3,3 +3,5 @@ b221d5389a80923337c8dcdb8379a0d4	bitstream-description.txt
 6513aeaedff0d62c1a4b3e0e633b2739	bitstream-format.txt
 74c46fc02f3e30221108c89f7daef9d1	bitstream-size.txt
 c56de8e4f54fd5f5750f06dbaa68e213	manifest-md5.txt
+245b0da2cf2ae76f2445cf7cc62f4aa5    bag-info.txt
+d96134c774c407f0c83404349887c1e0    manifest-sha1.txt

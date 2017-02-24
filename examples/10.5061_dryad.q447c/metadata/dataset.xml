@@ -15,6 +15,9 @@
 		<dc:creator>Elbakyan, Alexandra</dc:creator>
 		<dc:creator>Bohannon, John</dc:creator>
         <ddm:created>2016-04-28</ddm:created>
+        <ddm:available>2016-01-01T00:00:00Z</ddm:available>
+        <ddm:audience>D20000</ddm:audience>
+        <ddm:accessRights>NO_ACCESS</ddm:accessRights>
     </ddm:profile>
     <ddm:dcmiMetadata>
         <dcterms:identifier xsi:type="id-type:DOI">10.5061/dryad.q447c</dcterms:identifier>

@@ -1,0 +1,8 @@
+83c65171ae6bbaba996bf3a3af5915d342cca8ef	data/10.5061_dryad.q447c_1/ORIGINAL/scihub_data.zip
+b2693fcf86158cf05f05868076fde1786569892d	data/10.5061_dryad.q447c_2/ORIGINAL/Sci-Hub.html
+c676ec5b47c4d3879e55894201c718190ac8e9ba	data/10.5061_dryad.q447c_2/ORIGINAL/Sci-Hub.ipynb
+e8650ac5f63aecba6eff3853f04daa8c86773979	data/10.5061_dryad.q447c_3/ORIGINAL/publisher_DOI_prefixes.csv
+6bb8ed8b9681a4de0c4f9f14c48e7aa19228320d	data/10.5061_dryad.q447c_1/metadata.xml
+10bd223c4dde6891ceb086ac2354cb6049ae422a	data/10.5061_dryad.q447c_2/metadata.xml
+fc2018bf82c689e33790c2a8109c15a41804767a	data/10.5061_dryad.q447c_3/metadata.xml
+1f7679a6293cb0404b59345dcdecf214708eeead	data/metadata.xml

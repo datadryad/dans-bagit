@@ -6,4 +6,3 @@ e63e291bb81259b790a0479ff2d6d527	data/10.5061_dryad.q447c_1/ORIGINAL/scihub_data
 5f1bd392d8aa4d79dbad95874a421642	data/10.5061_dryad.q447c_2/metadata.xml
 9ea32801be20366341fafe313306e5a4	data/10.5061_dryad.q447c_3/metadata.xml
 9113bad3a4231f427e26618f3594827c	data/metadata.xml
-03693b5a04633e270fcb8a1418031de3	data/mets.xml
