@@ -449,23 +449,14 @@ public class DANSBag
                 this.writeToZip(bfr.getFile(), base + "/" + bfr.internalPath, out);
             }
 
-            // write the DANS files.xml document
-            Map<String, String> filesChecksums = this.writeToZip(dfs.toXML(), base + "/metadata/files.xml", out);
-            tagmanifest = tagmanifest + filesChecksums.get("md5") + "\t" + "metadata/files.xml" + "\n";
-
-            // write the DANS dataset.xml document
-            if (this.ddm != null)
-            {
-                Map<String, String> datasetChecksums = this.writeToZip(this.ddm.toXML(), base + "/metadata/dataset.xml", out);
-                tagmanifest = tagmanifest + datasetChecksums.get("md5") + "\t" + "metadata/dataset.xml" + "\n";
-            }
-
             // write the primary dim file
             if (this.dim != null)
             {
                 Map<String, String> dimChecksums = this.writeToZip(this.dim.toXML(), base + "/data/metadata.xml", out);
                 md5Manifest = md5Manifest + dimChecksums.get("md5") + "\t" + "data/metadata.xml" + "\n";
                 sha1Manifest = sha1Manifest + dimChecksums.get("sha-1") + "\t" + "data/metadata.xml" + "\n";
+                dfs.addFileMetadata("data/metadata.xml", "dcterms:title", "data/metadata.xml");
+                dfs.addFileMetadata("data/metadata.xml", "dcterms:format", "text/xml");
             }
 
             // write the datafile dim files
@@ -477,6 +468,19 @@ public class DANSBag
                 Map<String, String> subDimChecksums = this.writeToZip(dim.toXML(), base + "/" + zipPath, out);
                 md5Manifest = md5Manifest + subDimChecksums.get("md5") + "\t" + zipPath + "\n";
                 sha1Manifest = sha1Manifest + subDimChecksums.get("sha-1") + "\t" + zipPath + "\n";
+                dfs.addFileMetadata(zipPath, "dcterms:title", zipPath);
+                dfs.addFileMetadata(zipPath, "dcterms:format", "text/xml");
+            }
+
+            // write the DANS files.xml document
+            Map<String, String> filesChecksums = this.writeToZip(dfs.toXML(), base + "/metadata/files.xml", out);
+            tagmanifest = tagmanifest + filesChecksums.get("md5") + "\t" + "metadata/files.xml" + "\n";
+
+            // write the DANS dataset.xml document
+            if (this.ddm != null)
+            {
+                Map<String, String> datasetChecksums = this.writeToZip(this.ddm.toXML(), base + "/metadata/dataset.xml", out);
+                tagmanifest = tagmanifest + datasetChecksums.get("md5") + "\t" + "metadata/dataset.xml" + "\n";
             }
 
             // write the custom tag files
@@ -518,7 +522,7 @@ public class DANSBag
 
             // write the bag-info.txt
             Date now = new Date();
-            SimpleDateFormat sdf = new SimpleDateFormat("YYYY-MM-dd'T'HH:mm:ssX");
+            SimpleDateFormat sdf = new SimpleDateFormat("YYYY-MM-dd'T'HH:mm:ss.SSSX");
             String createdDate = sdf.format(now);
             String baginfofile = "Created: " + createdDate;
             Map<String, String> baginfoChecksums = this.writeToZip(baginfofile, base + "/bag-info.txt", out);
