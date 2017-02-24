@@ -287,6 +287,12 @@ public class DANSBag
     public void addBitstream(InputStream is, String filename, String format, String description, String dataFileIdent, String bundle)
         throws IOException
     {
+        if (this.zipFile.exists())
+        {
+            log.error("Attempt to add bitstream when zip already exists");
+            throw new RuntimeException("You can't add bitstreams to an existing Bag");
+        }
+
         log.info("Adding bitstream to DANSBag: filename= " + filename + "; format= " + format + "; data_file=" + dataFileIdent + "; bundle=" + bundle);
 
         // escape the dataFileIdent
@@ -435,15 +441,11 @@ public class DANSBag
                 if (bfr.md5 != null && !"".equals(bfr.md5))
                 {
                     md5Manifest = md5Manifest + bfr.md5 + "\t" + bfr.internalPath + "\n";
-                    //dfs.addFileMetadata(bfr.internalPath, "premis:messageDigestAlgorithm", "MD5");
-                    //dfs.addFileMetadata(bfr.internalPath, "premis:messageDigest", bfr.md5);
                 }
 
                 if (bfr.sha1 != null && !"".equals(bfr.sha1))
                 {
                     sha1Manifest = sha1Manifest + bfr.sha1 + "\t" + bfr.internalPath + "\n";
-                    //dfs.addFileMetadata(bfr.internalPath, "premis:messageDigestAlgorithm", "MD5");
-                    //dfs.addFileMetadata(bfr.internalPath, "premis:messageDigest", bfr.md5);
                 }
 
                 this.writeToZip(bfr.getFile(), base + "/" + bfr.internalPath, out);
@@ -580,7 +582,7 @@ public class DANSBag
      * @param file  The file reference
      * @param path  The path within the zip file to store a copy of the file
      * @param out   The ZipOutputStream to write the file to
-     * @return  The MD5 digest of the file
+     * @return  a map of digest formats and their values for the content (md5 and sha-1)
      * @throws IOException
      * @throws NoSuchAlgorithmException
      */
@@ -597,7 +599,7 @@ public class DANSBag
      * @param str   The string to write into a file
      * @param path  The path within the zip file to store the resulting text file
      * @param out   The ZipOutputStream to write the file to
-     * @return  The MD5 digest of the resulting text file
+     * @return  a map of digest formats and their values for the content (md5 and sha-1)
      * @throws IOException
      * @throws NoSuchAlgorithmException
      */
@@ -613,7 +615,7 @@ public class DANSBag
      * @param fi    InputStream to source data from
      * @param path  The path within the zip file to store the resulting file
      * @param out   The ZipOutputStream to write the file to
-     * @return  The MD5 digest of the resulting text file
+     * @return  a map of digest formats and their values for the content (md5 and sha-1)
      * @throws IOException
      * @throws NoSuchAlgorithmException
      */

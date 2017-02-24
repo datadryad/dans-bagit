@@ -50,6 +50,10 @@ public class DDM extends XMLFile
         profileOrder.add("ddm:accessRights");
     }
 
+    /**
+     * Default values to set in the profile section of the XML if no other values for these fields
+     * are provided by the user
+     */
     private static final Map<String, List<Map<String, String>>> profileDefaults;
     static
     {
