@@ -4,10 +4,8 @@ import nu.xom.Attribute;
 import nu.xom.Element;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 /**
  * Class to represent XML in the DANS DDM format
@@ -57,11 +55,50 @@ public class DDM extends XMLFile
     {
         profileDefaults = new HashMap<String, List<Map<String, String>>>();
 
+        List<Map<String, String>> title = new ArrayList<Map<String, String>>();
+        Map<String, String> tval = new HashMap<String, String>();
+        tval.put("_value", "Untitled");
+        title.add(tval);
+        profileDefaults.put("dc:title", title);
+
+        List<Map<String, String>> desc = new ArrayList<Map<String, String>>();
+        Map<String, String> dval = new HashMap<String, String>();
+        dval.put("_value", "No description available");
+        desc.add(dval);
+        profileDefaults.put("dc:description", desc);
+
+        List<Map<String, String>> cont = new ArrayList<Map<String, String>>();
+        Map<String, String> cval = new HashMap<String, String>();
+        cval.put("_value", "Unknown Author");
+        cont.add(cval);
+        profileDefaults.put("dc:creator", cont);
+
+        Date now = new Date();
+        SimpleDateFormat sdf = new SimpleDateFormat("YYYY-MM-dd'T'HH:mm:ss.SSSX");
+        String createdDate = sdf.format(now);
+        List<Map<String, String>> created = new ArrayList<Map<String, String>>();
+        Map<String, String> createdval = new HashMap<String, String>();
+        createdval.put("_value", createdDate);
+        created.add(createdval);
+        profileDefaults.put("dc:creator", created);
+
         List<Map<String, String>> available = new ArrayList<Map<String, String>>();
-        Map<String, String> val = new HashMap<String, String>();
-        val.put("_value", "2099-12-31T23:59:59+0000");
-        available.add(val);
+        Map<String, String> aval = new HashMap<String, String>();
+        aval.put("_value", "2099-12-31T23:59:59Z");
+        available.add(aval);
         profileDefaults.put("ddm:available", available);
+
+        List<Map<String, String>> audience = new ArrayList<Map<String, String>>();
+        Map<String, String> audval = new HashMap<String, String>();
+        audval.put("_value", "D20000");
+        audience.add(audval);
+        profileDefaults.put("ddm:audience", audience);
+
+        List<Map<String, String>> access = new ArrayList<Map<String, String>>();
+        Map<String, String> accval = new HashMap<String, String>();
+        accval.put("_value", "NO_ACCESS");
+        access.add(accval);
+        profileDefaults.put("ddm:accessRights", access);
     }
 
     /** profile values */
