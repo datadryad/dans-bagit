@@ -147,21 +147,6 @@ public class DANSBag
     }
 
     /**
-     * Load state from the given zip file
-     */
-    public void loadBag()
-        throws IOException
-    {
-        this.zipFile = new ZipFile(this.bagFile);
-        Enumeration e = this.zipFile.entries();
-
-        while (e.hasMoreElements())
-        {
-            ZipEntry entry = (ZipEntry) e.nextElement();
-        }
-    }
-
-    /**
      * Get the full path to the working directory
      *
      * @return path to the working directory
@@ -300,6 +285,53 @@ public class DANSBag
         return this.bagFile.length();
     }
 
+    /**
+     * Set the DDM metdata object for this bag
+     *
+     * @param ddm
+     */
+    public void setDDM(DDM ddm)
+    {
+        this.ddm = ddm;
+    }
+
+    public DDM getDDM()
+    {
+        return this.ddm;
+    }
+
+    /**
+     * Set the dataset DIM metadata for this bag
+     *
+     * @param dim
+     */
+    public void setDatasetDIM(DIM dim)
+    {
+        this.dim = dim;
+    }
+
+    public DIM getDatasetDIM()
+    {
+        return this.dim;
+    }
+
+    /**
+     * Set the data file DIM metadata for the given data file identifier
+     *
+     * @param dim
+     * @param dataFileIdent     the identifier for the data file
+     */
+    public void addDatafileDIM(DIM dim, String dataFileIdent)
+    {
+        this.subDim.put(dataFileIdent, dim);
+    }
+
+    public DIM getDatafileDIM(String dataFileIdent)
+    {
+        return this.subDim.get(dataFileIdent);
+    }
+
+
     public Set<String> dataFileIdents()
     {
         Set<String> idents = new HashSet<String>();
@@ -409,52 +441,6 @@ public class DANSBag
         bfr.dataFileIdent = dataFileIdent;
         bfr.bundle = bundle;
         this.fileRefs.add(bfr);
-    }
-
-    /**
-     * Set the DDM metdata object for this bag
-     *
-     * @param ddm
-     */
-    public void setDDM(DDM ddm)
-    {
-        this.ddm = ddm;
-    }
-
-    public DDM getDDM()
-    {
-        return this.ddm;
-    }
-
-    /**
-     * Set the dataset DIM metadata for this bag
-     *
-     * @param dim
-     */
-    public void setDatasetDIM(DIM dim)
-    {
-        this.dim = dim;
-    }
-
-    public DIM getDatasetDIM()
-    {
-        return this.dim;
-    }
-
-    /**
-     * Set the data file DIM metadata for the given data file identifier
-     *
-     * @param dim
-     * @param dataFileIdent     the identifier for the data file
-     */
-    public void addDatafileDIM(DIM dim, String dataFileIdent)
-    {
-        this.subDim.put(dataFileIdent, dim);
-    }
-
-    public DIM getDatafileDIM(String dataFileIdent)
-    {
-        return this.subDim.get(dataFileIdent);
     }
 
     /**
@@ -663,31 +649,20 @@ public class DANSBag
     }
 
     /**
-     * Clean out any cached data in the working directory
-     *
-     * @throws IOException
+     * Load state from the given zip file
      */
-    public void cleanupWorkingDir()
+    public void loadBag()
             throws IOException
     {
-        if (this.workingDir.exists())
-        {
-            log.debug("Cleaning up working directory " + this.workingDir.getAbsolutePath());
-            FileUtils.deleteDirectory(this.workingDir);
-        }
-    }
+        this.zipFile = new ZipFile(this.bagFile);
+        Enumeration e = this.zipFile.entries();
 
-    /**
-     * Delete the zip file
-     */
-    public void cleanupZip()
-    {
-        if (this.bagFile.exists())
+        while (e.hasMoreElements())
         {
-            log.debug("Cleaning up zip file " + this.bagFile.getAbsolutePath());
-            this.bagFile.delete();
+            ZipEntry entry = (ZipEntry) e.nextElement();
         }
     }
+    
 
     /**
      * Write the file referenced by the file handle to the given path inside the given zip output stream
@@ -806,5 +781,32 @@ public class DANSBag
         p.put("workingDir", workingDir);
 
         return p;
+    }
+
+    /**
+     * Clean out any cached data in the working directory
+     *
+     * @throws IOException
+     */
+    public void cleanupWorkingDir()
+            throws IOException
+    {
+        if (this.workingDir.exists())
+        {
+            log.debug("Cleaning up working directory " + this.workingDir.getAbsolutePath());
+            FileUtils.deleteDirectory(this.workingDir);
+        }
+    }
+
+    /**
+     * Delete the zip file
+     */
+    public void cleanupZip()
+    {
+        if (this.bagFile.exists())
+        {
+            log.debug("Cleaning up zip file " + this.bagFile.getAbsolutePath());
+            this.bagFile.delete();
+        }
     }
 }
