@@ -61,7 +61,8 @@ public class BagItTest
         DANSBag db = new DANSBag("testbag", zipPath, workingDir);
 
         // try adding a random set of bytes as a bitstream
-        InputStream is = new ByteArrayInputStream("asdklfjqwoie weoifjwoef jwoeifjwefpji".getBytes());
+        byte[] bytes = "asdklfjqwoie weoifjwoef jwoeifjwefpji".getBytes();
+        InputStream is = new ByteArrayInputStream(bytes);
         db.addBitstream(is, "myfile.txt", "text/plain", "some plain text", "10.whatever/ident/1", "ORIGINAL");
 
         // set some metadata on that data file
@@ -102,6 +103,46 @@ public class BagItTest
         String md5 = db.getMD5();
         long size = db.size();
         assert db.getZipName().equals("testmakebag.zip");
+
+        assert db.getZipPath() != null;
+        assert db.getDatasetDIM() != null;
+        assert db.getDDM() != null;
+        assert db.getWorkingDir() != null;
+
+        Set<String> idents = db.dataFileIdents();
+        assert idents.size() == 1;
+        assert idents.contains("10.whatever/ident/1");
+
+        for (String ident : idents)
+        {
+            assert db.getDatafileDIM(ident) != null;
+
+            Set<String> bundles = db.listBundles(ident);
+            assert bundles.size() == 1;
+            assert bundles.contains("ORIGINAL");
+
+            for (String bundle : bundles)
+            {
+                Set<BaggedBitstream> bbs = db.listBitstreams(ident, bundle);
+                assert bbs.size() == 1;
+
+                for (BaggedBitstream bb : bbs)
+                {
+                    assert bb.getDescription().equals("some plain text");
+                    assert bb.getBundle().equals("ORIGINAL");
+                    assert bb.getDataFileIdent().equals("10.whatever/ident/1");
+                    assert bb.getFilename().equals("myfile.txt");
+                    assert bb.getFormat().equals("text/plain");
+
+                    InputStream bbis = bb.getInputStream();
+                    assert bbis != null;
+
+                    byte[] retrieved = new byte[bytes.length];
+                    bbis.read(retrieved);
+                    assert Arrays.equals(retrieved, bytes);
+                }
+            }
+        }
 
         // lets read the whole file through a normal input stream
         InputStream input = db.getInputStream();

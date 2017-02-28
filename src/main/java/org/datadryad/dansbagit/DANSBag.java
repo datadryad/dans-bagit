@@ -11,6 +11,7 @@ import java.security.NoSuchAlgorithmException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
 /**
@@ -58,8 +59,9 @@ public class DANSBag
         private File file = null;
 
         public String filename = null;
-        public String fullPath = null;
-        public String internalPath = null;
+        public String workingPath = null;
+        public String payloadPath = null;
+        public String zipPath = null;
 
         public String description = null;
         public String format = null;
@@ -72,19 +74,39 @@ public class DANSBag
         public File getFile()
         {
             if (this.file == null) {
-                this.file = new File(fullPath);
+                this.file = new File(this.workingPath);
             }
             return this.file;
         }
+
+        public BaggedBitstream getBaggedBitstream()
+                throws IOException
+        {
+            InputStream is = null;
+            if (this.zipEntry != null)
+            {
+                is = zipFile.getInputStream(this.zipEntry);
+            }
+            else
+            {
+                is = new FileInputStream(this.getFile());
+            }
+
+            BaggedBitstream bb = new BaggedBitstream(is, this.filename, this.format, this.description, this.dataFileIdent, this.bundle);
+            return bb;
+        }
     }
 
-    private File zipFile = null;
+    private ZipFile zipFile = null;
+    private File bagFile = null;
     private File workingDir = null;
     private String name = null;
     private List<BagFileReference> fileRefs = new ArrayList<BagFileReference>();
     private DDM ddm = null;
     private DIM dim = null;
     private Map<String, DIM> subDim = new HashMap<String, DIM>();
+
+    private Map<String, String> dataFilePaths = new HashMap<String, String>();
 
     /**
      * Create a BagIt with the given name, using the provided zip as input or output, and with
@@ -95,6 +117,7 @@ public class DANSBag
      * @param workingDir    directory used for temporary storage
      */
     public DANSBag(String name, String zipPath, String workingDir)
+        throws IOException
     {
         this(name, new File(zipPath), new File(workingDir));
     }
@@ -104,34 +127,38 @@ public class DANSBag
      * the given working directory for temporary storage
      *
      * @param name      name to use for the bag.  This will form the top level directory inside the zip
-     * @param zipFile  path to read in or output zip content
+     * @param bagFile  path to read in or output zip content
      * @param workingDir    directory used for temporary storage
      */
-    public DANSBag(String name, File zipFile, File workingDir)
+    public DANSBag(String name, File bagFile, File workingDir)
+        throws IOException
     {
-        this.zipFile = zipFile;
+        this.bagFile = bagFile;
         this.workingDir = workingDir;
         this.name = name;
-        log.debug("Creating DANSBag object around zipfile " + zipFile.getAbsolutePath() + " using working directory " + workingDir.getAbsolutePath() + " with name " + name);
+        log.debug("Creating DANSBag object around zipfile " + bagFile.getAbsolutePath() + " using working directory " + workingDir.getAbsolutePath() + " with name " + name);
 
-        if (zipFile.exists())
+        if (this.bagFile.exists())
         {
-            log.debug("Zipfile " + zipFile.getAbsolutePath() + " exists, loading data from there");
+            log.debug("Zipfile " + bagFile.getAbsolutePath() + " exists, loading data from there");
             // load the bag
-            this.loadBag(zipFile);
+            this.loadBag();
         }
     }
 
     /**
      * Load state from the given zip file
-     *
-     * Not yet implemented
-     *
-     * @param file
      */
-    public void loadBag(File file)
+    public void loadBag()
+        throws IOException
     {
-        // TODO
+        this.zipFile = new ZipFile(this.bagFile);
+        Enumeration e = this.zipFile.entries();
+
+        while (e.hasMoreElements())
+        {
+            ZipEntry entry = (ZipEntry) e.nextElement();
+        }
     }
 
     /**
@@ -155,14 +182,14 @@ public class DANSBag
     public String getMD5()
         throws IOException
     {
-        if (!this.zipFile.exists())
+        if (!this.bagFile.exists())
         {
             throw new RuntimeException("You must writeFile before you can calculate the md5");
         }
 
         try
         {
-            FileInputStream fis = new FileInputStream(this.zipFile);
+            FileInputStream fis = new FileInputStream(this.bagFile);
             String md5 = Files.md5Hex(fis);
             fis.close();
             return md5;
@@ -184,11 +211,11 @@ public class DANSBag
      */
     public String getZipName()
     {
-        if (!this.zipFile.exists())
+        if (!this.bagFile.exists())
         {
             throw new RuntimeException("You must writeFile before you can ask questions about the zip");
         }
-        return this.zipFile.getName();
+        return this.bagFile.getName();
     }
 
     /**
@@ -198,11 +225,11 @@ public class DANSBag
      */
     public String getZipPath()
     {
-        if (!this.zipFile.exists())
+        if (!this.bagFile.exists())
         {
             throw new RuntimeException("You must writeFile before you can ask questions about the zip");
         }
-        return this.zipFile.getAbsolutePath();
+        return this.bagFile.getAbsolutePath();
     }
 
     /**
@@ -214,14 +241,14 @@ public class DANSBag
      */
     public InputStream getInputStream()
     {
-        if (!this.zipFile.exists())
+        if (!this.bagFile.exists())
         {
             throw new RuntimeException("You must writeFile before you can read the input stream");
         }
 
         try
         {
-            return new FileInputStream(this.zipFile);
+            return new FileInputStream(this.bagFile);
         }
         catch (FileNotFoundException e)
         {
@@ -242,14 +269,14 @@ public class DANSBag
      */
     public FileSegmentIterator getSegmentIterator(long size, boolean md5)
     {
-        if (!this.zipFile.exists())
+        if (!this.bagFile.exists())
         {
             throw new RuntimeException("You must writeFile before you can read the segments");
         }
 
         try
         {
-            return new FileSegmentIterator(this.zipFile, size, md5);
+            return new FileSegmentIterator(this.bagFile, size, md5);
         }
         catch (IOException e)
         {
@@ -266,11 +293,48 @@ public class DANSBag
      */
     public long size()
     {
-        if (!this.zipFile.exists())
+        if (!this.bagFile.exists())
         {
             throw new RuntimeException("You must writeFile before you can determine the size");
         }
-        return this.zipFile.length();
+        return this.bagFile.length();
+    }
+
+    public Set<String> dataFileIdents()
+    {
+        Set<String> idents = new HashSet<String>();
+        for (BagFileReference bfr : this.fileRefs)
+        {
+            idents.add(bfr.dataFileIdent);
+        }
+        return idents;
+    }
+
+    public Set<String> listBundles(String dataFileIdent)
+    {
+        Set<String> bundles = new HashSet<String>();
+        for (BagFileReference bfr : this.fileRefs)
+        {
+            if (dataFileIdent.equals(bfr.dataFileIdent))
+            {
+                bundles.add(bfr.bundle);
+            }
+        }
+        return bundles;
+    }
+
+    public Set<BaggedBitstream> listBitstreams(String dataFileIdent, String bundle)
+            throws IOException
+    {
+        Set<BaggedBitstream> bitstreams = new HashSet<BaggedBitstream>();
+        for (BagFileReference bfr : this.fileRefs)
+        {
+            if (dataFileIdent.equals(bfr.dataFileIdent) && bundle.equals(bfr.bundle))
+            {
+                bitstreams.add(bfr.getBaggedBitstream());
+            }
+        }
+        return bitstreams;
     }
 
     /**
@@ -287,7 +351,7 @@ public class DANSBag
     public void addBitstream(InputStream is, String filename, String format, String description, String dataFileIdent, String bundle)
         throws IOException
     {
-        if (this.zipFile.exists())
+        if (this.bagFile.exists())
         {
             log.error("Attempt to add bitstream when zip already exists");
             throw new RuntimeException("You can't add bitstreams to an existing Bag");
@@ -296,19 +360,21 @@ public class DANSBag
         log.info("Adding bitstream to DANSBag: filename= " + filename + "; format= " + format + "; data_file=" + dataFileIdent + "; bundle=" + bundle);
 
         // escape the dataFileIdent
-        String dataFilename = Files.sanitizeFilename(dataFileIdent);
-        log.debug("Sanitised dataFileIdent from " + dataFileIdent + " to " + dataFilename);
+        Map<String, String> dfPaths = this.paths(true, false, dataFileIdent, null, null);
+        // String dataFilename = Files.sanitizeFilename(dataFileIdent);
+        this.dataFilePaths.put(dfPaths.get("payload"), dataFileIdent);
+        log.debug("Sanitised dataFileIdent, placing " + dataFileIdent + " at " + dfPaths.get("payload"));
 
-        // get the correct folder/filename for the bitstream
-        String internalDir = "data" + File.separator + dataFilename + File.separator + bundle;
-        String internalFile = internalDir + File.separator + filename;
-        String targetDir = this.workingDir.getAbsolutePath() + File.separator + internalDir;
-        String filePath = targetDir + File.separator + filename;
-        log.info("Bistream will be temporarily staged at " + filePath);
-        log.info("Bitstream will be written to internal zip path " + internalFile);
+        // get the correct paths to use for the bitstream
+        Map<String, String> paths = this.paths(true, false, dataFileIdent, bundle, filename);
+        String workingPath = paths.get("working");
+        String payloadPath = paths.get("payload");
+        log.info("Bistream will be temporarily staged at " + workingPath);
+        log.info("Bitstream will be written to internal zip path " + payloadPath);
 
         // ensure that the target directory exists
-        (new File(targetDir)).mkdirs();
+        String workingDir = paths.get("workingDir");
+        (new File(workingDir)).mkdirs();
 
         // wrap the input stream in something that can get the MD5 as we read it
         MessageDigest mdmd5 = null;
@@ -326,19 +392,20 @@ public class DANSBag
         DigestInputStream dis = new DigestInputStream(inner, mdsha1);
 
         // write the input stream to the working directory, in the appropriate folder
-        OutputStream os = new FileOutputStream(filePath);
+        OutputStream os = new FileOutputStream(workingPath);
         IOUtils.copy(dis, os);
 
         // add the bitstream information to our internal data structure
         BagFileReference bfr = new BagFileReference();
         bfr.filename = filename;
-        bfr.fullPath = filePath;
-        bfr.internalPath = internalFile;
+        bfr.workingPath = workingPath;
+        bfr.payloadPath = payloadPath;
+        bfr.zipPath = paths.get("zip");
         bfr.md5 = Files.digestToString(mdmd5);
         bfr.sha1 = Files.digestToString(mdsha1);
         bfr.description = description;
         bfr.format = format;
-        bfr.size = (new File(filePath)).length();
+        bfr.size = (new File(workingPath)).length();
         bfr.dataFileIdent = dataFileIdent;
         bfr.bundle = bundle;
         this.fileRefs.add(bfr);
@@ -354,6 +421,11 @@ public class DANSBag
         this.ddm = ddm;
     }
 
+    public DDM getDDM()
+    {
+        return this.ddm;
+    }
+
     /**
      * Set the dataset DIM metadata for this bag
      *
@@ -362,6 +434,11 @@ public class DANSBag
     public void setDatasetDIM(DIM dim)
     {
         this.dim = dim;
+    }
+
+    public DIM getDatasetDIM()
+    {
+        return this.dim;
     }
 
     /**
@@ -373,6 +450,11 @@ public class DANSBag
     public void addDatafileDIM(DIM dim, String dataFileIdent)
     {
         this.subDim.put(dataFileIdent, dim);
+    }
+
+    public DIM getDatafileDIM(String dataFileIdent)
+    {
+        return this.subDim.get(dataFileIdent);
     }
 
     /**
@@ -388,25 +470,26 @@ public class DANSBag
         {
             // if this bag was initialised from a zip file, we can't write back to it - just too
             // complicated.
-            if (this.zipFile.exists()) {
+            if (this.bagFile.exists()) {
                 log.error("Attempt to write bag when zip already exists");
                 throw new RuntimeException("Cannot re-write a modified bag file.  You should either create a new bag file from the source files, or read in the old zip file and pass the components in here.");
             }
 
-            log.info("Writing bag to file " + this.zipFile.getAbsolutePath());
+            log.info("Writing bag to file " + this.bagFile.getAbsolutePath());
 
-            String base = Files.sanitizeFilename(this.name);
+            // String base = Files.sanitizeFilename(this.name);
 
             // prepare our zipped output stream
-            FileOutputStream dest = new FileOutputStream(this.zipFile);
+            FileOutputStream dest = new FileOutputStream(this.bagFile);
             ZipOutputStream out = new ZipOutputStream(new BufferedOutputStream(dest));
 
-            String descriptions = "";
-            String formats = "";
-            String sizes = "";
-            String md5Manifest = "";
-            String sha1Manifest = "";
-            String tagmanifest = "";
+            // prep all the metadata/tag files that we're going to need
+            TagFile descriptions = new TagFile();
+            TagFile formats = new TagFile();
+            TagFile sizes = new TagFile();
+            TagFile md5Manifest = new TagFile();
+            TagFile sha1Manifest = new TagFile();
+            TagFile tagmanifest = new TagFile();
 
             DANSFiles dfs = new DANSFiles();
 
@@ -414,126 +497,156 @@ public class DANSBag
             for (BagFileReference bfr : this.fileRefs)
             {
                 // add the filename to the files.xml metadata
-                dfs.addFileMetadata(bfr.internalPath, "dcterms:title", bfr.filename);
+                dfs.addFileMetadata(bfr.payloadPath, "dcterms:title", bfr.filename);
 
                 // update description tag file contents
                 if (bfr.description != null && !"".equals(bfr.description))
                 {
-                    descriptions = descriptions + bfr.description + "\t" + bfr.internalPath + "\n";
-                    dfs.addFileMetadata(bfr.internalPath, "dcterms:description", bfr.description);
+                    descriptions.add(bfr.payloadPath, bfr.description);
+                    dfs.addFileMetadata(bfr.payloadPath, "dcterms:description", bfr.description);
                 }
 
                 // update format tag file contents
                 if (bfr.format != null && !"".equals(bfr.format))
                 {
-                    formats = formats + bfr.format + "\t" + bfr.internalPath + "\n";
-                    dfs.addFileMetadata(bfr.internalPath, "dcterms:format", bfr.format);
+                    formats.add(bfr.payloadPath, bfr.format);
+                    dfs.addFileMetadata(bfr.payloadPath, "dcterms:format", bfr.format);
                 }
 
                 // update size tag file contents
                 if (bfr.size != -1)
                 {
-                    sizes = sizes + Long.toString(bfr.size) + "\t" + bfr.internalPath + "\n";
-                    dfs.addFileMetadata(bfr.internalPath, "dcterms:extent", Long.toString(bfr.size));
+                    sizes.add(bfr.payloadPath, Long.toString(bfr.size));
+                    dfs.addFileMetadata(bfr.payloadPath, "dcterms:extent", Long.toString(bfr.size));
                 }
 
                 // update the manifests
                 if (bfr.md5 != null && !"".equals(bfr.md5))
                 {
-                    md5Manifest = md5Manifest + bfr.md5 + "\t" + bfr.internalPath + "\n";
+                    md5Manifest.add(bfr.payloadPath, bfr.md5);
                 }
 
                 if (bfr.sha1 != null && !"".equals(bfr.sha1))
                 {
-                    sha1Manifest = sha1Manifest + bfr.sha1 + "\t" + bfr.internalPath + "\n";
+                    sha1Manifest.add(bfr.payloadPath, bfr.sha1);
                 }
 
-                this.writeToZip(bfr.getFile(), base + "/" + bfr.internalPath, out);
+                // this.writeToZip(bfr.getFile(), base + "/" + bfr.payloadPath, out);
+                this.writeToZip(bfr.getFile(), bfr.zipPath, out);
             }
 
             // write the primary dim file
             if (this.dim != null)
             {
-                Map<String, String> dimChecksums = this.writeToZip(this.dim.toXML(), base + "/data/metadata.xml", out);
-                md5Manifest = md5Manifest + dimChecksums.get("md5") + "\t" + "data/metadata.xml" + "\n";
-                sha1Manifest = sha1Manifest + dimChecksums.get("sha-1") + "\t" + "data/metadata.xml" + "\n";
-                dfs.addFileMetadata("data/metadata.xml", "dcterms:title", "data/metadata.xml");
-                dfs.addFileMetadata("data/metadata.xml", "dcterms:format", "text/xml");
+                Map<String, String> paths = this.paths(true, false, null, null, "metadata.xml");
+                String payload = paths.get("payload");
+                // Map<String, String> dimChecksums = this.writeToZip(this.dim.toXML(), base + "/data/metadata.xml", out);
+                Map<String, String> dimChecksums = this.writeToZip(this.dim.toXML(), paths.get("zip"), out);
+                md5Manifest.add(payload, dimChecksums.get("md5"));
+                sha1Manifest.add(payload, dimChecksums.get("sha-1"));
+                dfs.addFileMetadata(payload, "dcterms:title", payload);
+                dfs.addFileMetadata(payload, "dcterms:format", "text/xml");
             }
 
             // write the datafile dim files
             for (String ident : this.subDim.keySet())
             {
-                String dataDir = Files.sanitizeFilename(ident);
-                String zipPath = "data/" + dataDir + "/metadata.xml";
+                Map<String, String> paths = this.paths(true, false, ident, null, "metadata.xml");
+                String payload = paths.get("payload");
+                //String dataDir = Files.sanitizeFilename(ident);
+                //String zipPath = "data/" + dataDir + "/metadata.xml";
+
                 DIM dim = this.subDim.get(ident);
-                Map<String, String> subDimChecksums = this.writeToZip(dim.toXML(), base + "/" + zipPath, out);
-                md5Manifest = md5Manifest + subDimChecksums.get("md5") + "\t" + zipPath + "\n";
-                sha1Manifest = sha1Manifest + subDimChecksums.get("sha-1") + "\t" + zipPath + "\n";
-                dfs.addFileMetadata(zipPath, "dcterms:title", zipPath);
-                dfs.addFileMetadata(zipPath, "dcterms:format", "text/xml");
+                // Map<String, String> subDimChecksums = this.writeToZip(dim.toXML(), base + "/" + zipPath, out);
+                Map<String, String> subDimChecksums = this.writeToZip(dim.toXML(), paths.get("zip"), out);
+                md5Manifest.add(payload, subDimChecksums.get("md5"));
+                sha1Manifest.add(payload, subDimChecksums.get("sha-1"));
+                dfs.addFileMetadata(payload, "dcterms:title", payload);
+                dfs.addFileMetadata(payload, "dcterms:format", "text/xml");
             }
 
             // write the DANS files.xml document
-            Map<String, String> filesChecksums = this.writeToZip(dfs.toXML(), base + "/metadata/files.xml", out);
-            tagmanifest = tagmanifest + filesChecksums.get("md5") + "\t" + "metadata/files.xml" + "\n";
+            if (dfs != null)
+            {
+                Map<String, String> paths = this.paths(false, true, null, null, "files.xml");
+                Map<String, String> filesChecksums = this.writeToZip(dfs.toXML(), paths.get("zip"), out);
+                tagmanifest.add(paths.get("payload"), filesChecksums.get("md5"));
+            }
 
             // write the DANS dataset.xml document
             if (this.ddm != null)
             {
-                Map<String, String> datasetChecksums = this.writeToZip(this.ddm.toXML(), base + "/metadata/dataset.xml", out);
-                tagmanifest = tagmanifest + datasetChecksums.get("md5") + "\t" + "metadata/dataset.xml" + "\n";
+                Map<String, String> paths = this.paths(false, true, null, null, "dataset.xml");
+                Map<String, String> datasetChecksums = this.writeToZip(this.ddm.toXML(), paths.get("zip"), out);
+                tagmanifest.add(paths.get("payload"), datasetChecksums.get("md5"));
             }
 
             // write the custom tag files
-            if (!"".equals(descriptions))
+            if (descriptions.hasEntries())
             {
-                Map<String, String> checksums = this.writeToZip(descriptions, base + "/bitstream-description.txt", out);
-                tagmanifest = tagmanifest + checksums.get("md5") + "\tbitstream-description.txt" + "\n";
+                Map<String, String> paths = this.paths(false, false, null, null, "bitstream-description.txt");
+                Map<String, String> checksums = this.writeToZip(descriptions.serialise(), paths.get("zip"), out);
+                tagmanifest.add(paths.get("payload"), checksums.get("md5"));
             }
 
-            if (!"".equals(formats))
+            if (formats.hasEntries())
             {
-                Map<String, String> checksums = this.writeToZip(formats, base + "/bitstream-format.txt", out);
-                tagmanifest = tagmanifest + checksums.get("md5") + "\tbitstream-format.txt" + "\n";
+                Map<String, String> paths = this.paths(false, false, null, null, "bitstream-format.txt");
+                Map<String, String> checksums = this.writeToZip(formats.serialise(), paths.get("zip"), out);
+                tagmanifest.add(paths.get("payload"), checksums.get("md5"));
             }
 
-            if (!"".equals(sizes))
+            if (sizes.hasEntries())
             {
-                Map<String, String> checksums = this.writeToZip(sizes, base + "/bitstream-size.txt", out);
-                tagmanifest = tagmanifest + checksums.get("md5") + "\tbitstream-size.txt" + "\n";
+                Map<String, String> paths = this.paths(false, false, null, null, "bitstream-size.txt");
+                Map<String, String> checksums = this.writeToZip(sizes.serialise(), paths.get("zip"), out);
+                tagmanifest.add(paths.get("payload"), checksums.get("md5"));
             }
 
             // write the checksum manifests
-            if (!"".equals(md5Manifest))
+            if (md5Manifest.hasEntries())
             {
-                Map<String, String> manifestChecksums = this.writeToZip(md5Manifest, base + "/manifest-md5.txt", out);
-                tagmanifest = tagmanifest + manifestChecksums.get("md5") + "\tmanifest-md5.txt" + "\n";
+                Map<String, String> paths = this.paths(false, false, null, null, "manifest-md5.txt");
+                Map<String, String> manifestChecksums = this.writeToZip(md5Manifest.serialise(), paths.get("zip"), out);
+                tagmanifest.add(paths.get("payload"), manifestChecksums.get("md5"));
             }
 
-            if (!"".equals(sha1Manifest))
+            if (sha1Manifest.hasEntries())
             {
-                Map<String, String> manifestChecksums = this.writeToZip(sha1Manifest, base + "/manifest-sha1.txt", out);
-                tagmanifest = tagmanifest + manifestChecksums.get("md5") + "\tmanifest-sha1.txt" + "\n";
+                Map<String, String> paths = this.paths(false, false, null, null, "manifest-sha1.txt");
+                Map<String, String> manifestChecksums = this.writeToZip(sha1Manifest.serialise(), paths.get("zip"), out);
+                tagmanifest.add(paths.get("payload"), manifestChecksums.get("md5"));
+            }
+
+            // write the data file mappings tag file
+            if (this.dataFilePaths.size() > 0)
+            {
+                TagFile dfmtf = new TagFile(this.dataFilePaths);
+                Map<String, String> paths = this.paths(false, false, null, null, "datafileidents.txt");
+                Map<String, String> dfmtfChecksums = this.writeToZip(dfmtf.serialise(), paths.get("zip"), out);
+                tagmanifest.add(paths.get("payload"), dfmtfChecksums.get("md5"));
             }
 
             // write the bagit.txt
             String bagitfile = "BagIt-Version: 0.97\nTag-File-Character-Encoding: UTF-8";
-            Map<String, String> bagitChecksums = this.writeToZip(bagitfile, base + "/bagit.txt", out);
-            tagmanifest = tagmanifest + bagitChecksums.get("md5") + "\tbagit.txt" + "\n";
+            Map<String, String> paths = this.paths(false, false, null, null, "bagit.txt");
+            Map<String, String> bagitChecksums = this.writeToZip(bagitfile, paths.get("zip"), out);
+            tagmanifest.add(paths.get("payload"), bagitChecksums.get("md5"));
 
             // write the bag-info.txt
             Date now = new Date();
             SimpleDateFormat sdf = new SimpleDateFormat("YYYY-MM-dd'T'HH:mm:ss.SSSX");
             String createdDate = sdf.format(now);
             String baginfofile = "Created: " + createdDate;
-            Map<String, String> baginfoChecksums = this.writeToZip(baginfofile, base + "/bag-info.txt", out);
-            tagmanifest = tagmanifest + baginfoChecksums.get("md5") + "\tbag-info.txt" + "\n";
+            paths = this.paths(false, false, null, null, "bag-info.txt");
+            Map<String, String> baginfoChecksums = this.writeToZip(baginfofile, paths.get("zip"), out);
+            tagmanifest.add(paths.get("payload"), baginfoChecksums.get("md5"));
 
             // finally write the tag manifest
-            if (!"".equals(tagmanifest))
+            if (tagmanifest.hasEntries())
             {
-                this.writeToZip(tagmanifest, base + "/tagmanifest-md5.txt", out);
+                paths = this.paths(false, false, null, null, "tagmanifest-md5.txt");
+                this.writeToZip(tagmanifest.serialise(), paths.get("zip"), out);
             }
 
             out.close();
@@ -569,10 +682,10 @@ public class DANSBag
      */
     public void cleanupZip()
     {
-        if (this.zipFile.exists())
+        if (this.bagFile.exists())
         {
-            log.debug("Cleaning up zip file " + this.zipFile.getAbsolutePath());
-            this.zipFile.delete();
+            log.debug("Cleaning up zip file " + this.bagFile.getAbsolutePath());
+            this.bagFile.delete();
         }
     }
 
@@ -644,5 +757,54 @@ public class DANSBag
         ret.put("md5", md5hex);
         ret.put("sha-1", sha1hex);
         return ret;
+    }
+
+    private Map<String, String> paths(boolean payloadFile, boolean dansMetadata, String dataFileIdent, String bundle, String filename)
+    {
+        Map<String, String> p = new HashMap<String, String>();
+
+        // work out the path to the payload file
+        StringBuilder payload = new StringBuilder();
+
+        if (payloadFile)
+        {
+            payload.append("data").append(File.separator);
+        }
+        else if (dansMetadata)
+        {
+            payload.append("metadata").append(File.separator);
+        }
+
+        if (dataFileIdent != null)
+        {
+            String dataFileDir = Files.sanitizeFilename(dataFileIdent);
+            payload.append(dataFileDir).append(File.separator);
+        }
+        if (bundle != null)
+        {
+            payload.append(bundle).append(File.separator);
+        }
+        String payloadDir = payload.toString();
+
+        if (filename != null)
+        {
+            payload.append(filename);
+        }
+        String payloadPath = payload.toString();
+
+        p.put("payload", payloadPath);
+
+        // extend this to the zip path
+        String base = Files.sanitizeFilename(this.name);
+        p.put("zip", base + File.separator + payloadPath);
+
+        // also calcuate a working path
+        String workingFile = this.workingDir.getAbsolutePath() + File.separator + payloadPath;
+        p.put("working", workingFile);
+
+        String workingDir = this.workingDir.getAbsolutePath() + File.separator + payloadDir;
+        p.put("workingDir", workingDir);
+
+        return p;
     }
 }
