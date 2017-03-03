@@ -1,9 +1,9 @@
 package org.datadryad.dansbagit;
 
-import nu.xom.Attribute;
-import nu.xom.Element;
+import nu.xom.*;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.*;
 

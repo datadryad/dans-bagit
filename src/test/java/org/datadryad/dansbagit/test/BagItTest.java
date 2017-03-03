@@ -100,13 +100,12 @@ public class BagItTest
         db.writeToFile();
 
         // check that we can get all the properties from the object
-        String md5 = db.getMD5();
+        assert db.getMD5() != null;
         long size = db.size();
         assert db.getZipName().equals("testmakebag.zip");
 
         assert db.getZipPath() != null;
         assert db.getDatasetDIM() != null;
-        assert db.getDDM() != null;
         assert db.getWorkingDir() != null;
 
         Set<String> idents = db.dataFileIdents();
@@ -255,6 +254,73 @@ public class BagItTest
             System.out.println(path + " - " + md5);
         }
     }
+
+    @Test
+    public void testReadBag()
+            throws Exception
+    {
+        String workingDir = System.getProperty("user.dir") + "/src/test/resources/working/testreadbag";
+        this.cleanup.add(workingDir);
+
+        String zipPath = System.getProperty("user.dir") + "/src/test/resources/bags/testreadbag.zip";
+
+        File f = new File(workingDir);
+        if (!f.exists())
+        {
+            f.mkdirs();
+        }
+
+        DANSBag db = new DANSBag(zipPath, workingDir);
+
+        assert db.getWorkingDir() != null;
+        assert db.getMD5() != null;
+        assert db.getZipPath() != null;
+        assert db.getZipName() != null;
+        assert db.getInputStream() != null;
+        assert db.getSegmentIterator(1000, true) != null;
+        assert db.size() > -1;
+
+        DIM dsDim = db.getDatasetDIM();
+
+        Set<String> idents = db.dataFileIdents();
+        assert idents.size() == 1;
+        assert idents.contains("10.whatever/ident/1");
+
+        byte[] bytes = "asdklfjqwoie weoifjwoef jwoeifjwefpji".getBytes();
+        for (String ident : idents)
+        {
+            DIM dfDim = db.getDatafileDIM(ident);
+
+            Set<String> bundles = db.listBundles(ident);
+            assert bundles.size() == 1;
+            assert bundles.contains("ORIGINAL");
+
+            for (String bundle : bundles)
+            {
+                Set<BaggedBitstream> bbs = db.listBitstreams(ident, bundle);
+                assert bbs.size() == 1;
+
+                for (BaggedBitstream bb : bbs)
+                {
+                    assert bb.getDescription().equals("some plain text");
+                    assert bb.getBundle().equals("ORIGINAL");
+                    assert bb.getDataFileIdent().equals("10.whatever/ident/1");
+                    assert bb.getFilename().equals("myfile.txt");
+                    assert bb.getFormat().equals("text/plain");
+
+                    InputStream bbis = bb.getInputStream();
+                    assert bbis != null;
+
+                    byte[] retrieved = new byte[bytes.length];
+                    bbis.read(retrieved);
+                    assert Arrays.equals(retrieved, bytes);
+                }
+            }
+        }
+
+    }
+
+    ////////////////////////////////////////////////////////////
 
     private byte[] readInput(InputStream is, int bufferSize)
             throws Exception

@@ -10,6 +10,8 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
@@ -107,6 +109,18 @@ public class DANSBag
     private Map<String, DIM> subDim = new HashMap<String, DIM>();
 
     private Map<String, String> dataFilePaths = new HashMap<String, String>();
+
+    public DANSBag(String zipPath, String workingDir)
+        throws IOException
+    {
+        this(null, zipPath, workingDir);
+    }
+
+    public DANSBag(File bagFile, File workingDir)
+        throws IOException
+    {
+        this(null, bagFile, workingDir);
+    }
 
     /**
      * Create a BagIt with the given name, using the provided zip as input or output, and with
@@ -221,8 +235,6 @@ public class DANSBag
      * Get an input stream for the entire zip file.  You can only do this once the zip file exists, otherwise you will get a RuntimeException
      *
      * @return an input stream from which you can retrieve the entire zip file
-     *
-     * @throws Exception
      */
     public InputStream getInputStream()
     {
@@ -293,11 +305,6 @@ public class DANSBag
     public void setDDM(DDM ddm)
     {
         this.ddm = ddm;
-    }
-
-    public DDM getDDM()
-    {
-        return this.ddm;
     }
 
     /**
@@ -607,7 +614,7 @@ public class DANSBag
             // write the data file mappings tag file
             if (this.dataFilePaths.size() > 0)
             {
-                TagFile dfmtf = new TagFile(this.dataFilePaths);
+                TagFile dfmtf = new TagFile((HashMap) this.dataFilePaths);
                 Map<String, String> paths = this.paths(false, false, null, null, "datafileidents.txt");
                 Map<String, String> dfmtfChecksums = this.writeToZip(dfmtf.serialise(), paths.get("zip"), out);
                 tagmanifest.add(paths.get("payload"), dfmtfChecksums.get("md5"));
@@ -657,12 +664,107 @@ public class DANSBag
         this.zipFile = new ZipFile(this.bagFile);
         Enumeration e = this.zipFile.entries();
 
+        // some paths we'll want for exact comparison
+        // String dimPath = this.paths(true, false, null, null, "metadata.xml").get("zip");
+
+        // tag files we'll want to create
+        TagFile descriptions = null;
+        TagFile formats = null;
+        TagFile sizes = null;
+        TagFile dataFileIdents = null;
+
+        List<String> bitstreams = new ArrayList<String>();
+
         while (e.hasMoreElements())
         {
             ZipEntry entry = (ZipEntry) e.nextElement();
+            String path = entry.getName();
+
+            if (this.name == null)
+            {
+                this.name = this.getRootName(path);
+            }
+
+            if (this.pathIsDatasetDIM(path))
+            {
+                InputStream is = this.zipFile.getInputStream(entry);
+                DIM dim = DIM.parse(is);
+                this.setDatasetDIM(dim);
+            }
+            else if (this.pathIsDataFileDIM(path))
+            {
+                InputStream is = this.zipFile.getInputStream(entry);
+                DIM dim = DIM.parse(is);
+                String ident = this.getPayloadDataFileIdent(path);
+                this.addDatafileDIM(dim, ident);
+            }
+            else if (this.pathIsDryadTagFile(path))
+            {
+                InputStream is = this.zipFile.getInputStream(entry);
+                if (path.endsWith("bitstream-description.txt"))
+                {
+                    descriptions = TagFile.parse(is);
+                }
+                else if (path.endsWith("bitstream-format.txt"))
+                {
+                    formats = TagFile.parse(is);
+                }
+                else if (path.endsWith("bitstream-size.txt"))
+                {
+                    sizes = TagFile.parse(is);
+                }
+                else if (path.endsWith("datafileidents.txt"))
+                {
+                    dataFileIdents = TagFile.parse(is);
+                }
+            }
+            else if (this.pathIsBitstream(path))
+            {
+                bitstreams.add(path);
+            }
+        }
+
+        if (dataFileIdents == null)
+        {
+            throw new RuntimeException("Bag File does not contain a datafileidents.txt - cannot parse");
+        }
+
+        for (String bsPath : bitstreams)
+        {
+            String dfPathBit = this.getPayloadDataFileIdent(bsPath);
+            String bundle = this.getPayloadBundle(bsPath);
+            String filename = this.getFilename(bsPath);
+
+            String dataFilePath = "data/" + dfPathBit + File.separator;
+            String dataFileIdent = dataFileIdents.getValue(dataFilePath);
+            this.dataFilePaths.put(dataFilePath, dataFileIdent);
+
+            Map<String, String> paths = this.paths(true, false, dataFileIdent, bundle, filename);
+            String payloadPath = paths.get("payload");
+
+            BagFileReference bfr = new BagFileReference();
+            bfr.zipEntry = this.zipFile.getEntry(bsPath);
+            bfr.filename = filename;
+            bfr.payloadPath = payloadPath;
+            bfr.zipPath = paths.get("zip");
+            bfr.dataFileIdent = dataFileIdent;
+            bfr.bundle = bundle;
+            if (descriptions != null)
+            {
+                bfr.description = descriptions.getValue(payloadPath);
+            }
+            if (formats != null)
+            {
+                bfr.format = formats.getValue(payloadPath);
+            }
+            if (sizes != null)
+            {
+                bfr.size = Integer.parseInt(sizes.getValue(payloadPath));
+            }
+            this.fileRefs.add(bfr);
         }
     }
-    
+
 
     /**
      * Write the file referenced by the file handle to the given path inside the given zip output stream
@@ -781,6 +883,72 @@ public class DANSBag
         p.put("workingDir", workingDir);
 
         return p;
+    }
+
+    private boolean pathIsBitstream(String path)
+    {
+        String pattern = "([^/]+)/data/([^/]+)/([^/]+)/.+";
+        return this.matches(pattern, path);
+    }
+
+    private String getRootName(String path)
+    {
+        String pattern = "([^/]+)/.+";
+        return this.group(pattern, path, 1);
+    }
+
+    private String getPayloadDataFileIdent(String path)
+    {
+        String pattern = "([^/]+)/data/([^/]+)/.+";
+        return this.group(pattern, path, 2);
+    }
+
+    private String getPayloadBundle(String path)
+    {
+        String pattern = "([^/]+)/data/([^/]+)/([^/]+)/.+";
+        return this.group(pattern, path, 3);
+    }
+
+    private String getFilename(String path)
+    {
+        String pattern = "([^/]+)/data/([^/]+)/([^/]+)/(.+)";
+        return this.group(pattern, path, 4);
+    }
+
+    private boolean pathIsDatasetDIM(String path)
+    {
+        String pattern = "([^/]+)/data/metadata\\.xml";
+        return this.matches(pattern, path);
+    }
+
+    private boolean pathIsDataFileDIM(String path)
+    {
+        String pattern = "([^/]+)/data/([^/]+)/metadata\\.xml";
+        return this.matches(pattern, path);
+    }
+
+    private boolean pathIsDryadTagFile(String path)
+    {
+        String pattern = "([^/]+)/([^/]+\\.txt)";
+        return this.matches(pattern, path);
+    }
+
+    private boolean matches(String pattern, String string)
+    {
+        Pattern r = Pattern.compile(pattern);
+        Matcher m = r.matcher(string);
+        return m.matches();
+    }
+
+    private String group(String pattern, String string, int group)
+    {
+        Pattern r = Pattern.compile(pattern);
+        Matcher m = r.matcher(string);
+        if (m.find())
+        {
+            return m.group(group);
+        }
+        return null;
     }
 
     /**

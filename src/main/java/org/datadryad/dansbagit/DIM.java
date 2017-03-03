@@ -1,9 +1,9 @@
 package org.datadryad.dansbagit;
 
-import nu.xom.Attribute;
-import nu.xom.Element;
+import nu.xom.*;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -99,5 +99,55 @@ public class DIM extends XMLFile
         }
 
         return this.xml2String(dim);
+    }
+
+    public static DIM parse(InputStream is)
+            throws IOException
+    {
+        Builder parser = new Builder();
+        Document doc;
+        try
+        {
+            doc = parser.build(is);
+        }
+        catch (ParsingException e)
+        {
+            throw new RuntimeException(e);
+        }
+        Element root = doc.getRootElement();
+
+        DIM dim = new DIM();
+        for (int i = 0; i < root.getChildCount(); i++)
+        {
+            Node dimNode = root.getChild(i);
+            if (dimNode instanceof Element) {
+                Element dimEntry = (Element) dimNode;
+                Attribute schemaAttr = dimEntry.getAttribute("mdschema");
+                Attribute elementAttr = dimEntry.getAttribute("element");
+                Attribute qualifierAttr = dimEntry.getAttribute("qualifier");
+
+                String schema = null;
+                String element = null;
+                String qualifier = null;
+
+                if (schemaAttr != null)
+                {
+                    schema = schemaAttr.getValue();
+                }
+                if (elementAttr != null)
+                {
+                    element = elementAttr.getValue();
+                }
+                if (qualifierAttr != null)
+                {
+                    qualifier = qualifierAttr.getValue();
+                }
+
+                String value = dimEntry.getValue();
+                dim.addField(schema, element, qualifier, value);
+            }
+        }
+
+        return dim;
     }
 }
