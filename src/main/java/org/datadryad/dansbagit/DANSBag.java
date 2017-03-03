@@ -615,7 +615,7 @@ public class DANSBag
             if (this.dataFilePaths.size() > 0)
             {
                 TagFile dfmtf = new TagFile((HashMap) this.dataFilePaths);
-                Map<String, String> paths = this.paths(false, false, null, null, "datafileidents.txt");
+                Map<String, String> paths = this.paths(false, false, null, null, "ident-datafiles.txt");
                 Map<String, String> dfmtfChecksums = this.writeToZip(dfmtf.serialise(), paths.get("zip"), out);
                 tagmanifest.add(paths.get("payload"), dfmtfChecksums.get("md5"));
             }
@@ -713,7 +713,7 @@ public class DANSBag
                 {
                     sizes = TagFile.parse(is);
                 }
-                else if (path.endsWith("datafileidents.txt"))
+                else if (path.endsWith("ident-datafiles.txt"))
                 {
                     dataFileIdents = TagFile.parse(is);
                 }
@@ -726,7 +726,7 @@ public class DANSBag
 
         if (dataFileIdents == null)
         {
-            throw new RuntimeException("Bag File does not contain a datafileidents.txt - cannot parse");
+            throw new RuntimeException("Bag File does not contain a ident-datafiles.txt - cannot parse");
         }
 
         for (String bsPath : bitstreams)
