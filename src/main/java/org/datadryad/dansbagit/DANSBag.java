@@ -674,6 +674,7 @@ public class DANSBag
         TagFile dataFileIdents = null;
 
         List<String> bitstreams = new ArrayList<String>();
+        List<String> dfDims = new ArrayList<String>();
 
         while (e.hasMoreElements())
         {
@@ -693,10 +694,7 @@ public class DANSBag
             }
             else if (this.pathIsDataFileDIM(path))
             {
-                InputStream is = this.zipFile.getInputStream(entry);
-                DIM dim = DIM.parse(is);
-                String ident = this.getPayloadDataFileIdent(path);
-                this.addDatafileDIM(dim, ident);
+                dfDims.add(path);
             }
             else if (this.pathIsDryadTagFile(path))
             {
@@ -727,6 +725,18 @@ public class DANSBag
         if (dataFileIdents == null)
         {
             throw new RuntimeException("Bag File does not contain a ident-datafiles.txt - cannot parse");
+        }
+
+        for (String dimPath : dfDims)
+        {
+            String dimPathBit = this.getPayloadDataFileIdent(dimPath);
+            String dataFilePath = "data/" + dimPathBit + File.separator;
+            String dataFileIdent = dataFileIdents.getValue(dataFilePath);
+
+            ZipEntry entry = this.zipFile.getEntry(dimPath);
+            InputStream is = this.zipFile.getInputStream(entry);
+            DIM dim = DIM.parse(is);
+            this.addDatafileDIM(dim, dataFileIdent);
         }
 
         for (String bsPath : bitstreams)

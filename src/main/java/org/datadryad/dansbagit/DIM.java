@@ -4,10 +4,8 @@ import nu.xom.*;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.lang.reflect.Array;
+import java.util.*;
 
 /**
  * XML class representing the DIM (DSpace Internal Metadata) format
@@ -29,21 +27,8 @@ public class DIM extends XMLFile
      */
     public void addDSpaceField(String field, String value)
     {
-        String[] bits = field.split("\\.");
-        String schema = null;
-        String element = null;
-        String qualifier = null;
-        if (bits.length >= 2)
-        {
-            schema = bits[0];
-            element = bits[1];
-        }
-        if (bits.length == 3)
-        {
-            qualifier = bits[2];
-        }
-
-        this.addField(schema, element, qualifier, value);
+        Map<String, String> bits = this.fieldBits(field);
+        this.addField(bits.get("mdschema"), bits.get("element"), bits.get("qualifier"), value);
     }
 
     /**
@@ -59,9 +44,61 @@ public class DIM extends XMLFile
         Map<String, String> entry = new HashMap<String, String>();
         entry.put("mdschema", schema);
         entry.put("element", element);
-        entry.put("qualifier", qualifier);
+        if (qualifier != null)
+        {
+            entry.put("qualifier", qualifier);
+        }
         entry.put("value", value);
         this.fields.add(entry);
+    }
+
+    public Set<String> listDSpaceFields()
+    {
+        Set<String> fields = new HashSet<String>();
+        for (Map<String, String> field : this.fields)
+        {
+            String dsField = "";
+            dsField += field.get("mdschema") + ".";
+            dsField += field.get("element");
+            if (field.containsKey("qualifier") && field.get("qualifier") != null)
+            {
+                dsField += "." + field.get("qualifier");
+            }
+            fields.add(dsField);
+        }
+        return fields;
+    }
+
+    public List<String> getDSpaceFieldValues(String field)
+    {
+        List<String> values = new ArrayList<String>();
+        Map<String, String> bits = this.fieldBits(field);
+        for (Map<String, String> storedField : this.fields)
+        {
+            boolean schema = storedField.get("mdschema").equals(bits.get("mdschema"));
+            boolean element = storedField.get("element").equals(bits.get("element"));
+            boolean qualifier = false;
+            if (storedField.containsKey("qualifier"))
+            {
+                if (bits.containsKey("qualifier"))
+                {
+                    qualifier = storedField.get("qualifier").equals(bits.get("qualifier"));
+                }
+            }
+            else
+            {
+                if (!bits.containsKey("qualifier"))
+                {
+                    qualifier = true;
+                }
+            }
+
+            if (schema && element && qualifier)
+            {
+                values.add(storedField.get("value"));
+            }
+        }
+        return values;
     }
 
     /**
@@ -149,5 +186,31 @@ public class DIM extends XMLFile
         }
 
         return dim;
+    }
+
+    public Map<String, String> fieldBits(String field)
+    {
+        String[] bits = field.split("\\.");
+        String schema = null;
+        String element = null;
+        String qualifier = null;
+        if (bits.length >= 2)
+        {
+            schema = bits[0];
+            element = bits[1];
+        }
+        if (bits.length == 3)
+        {
+            qualifier = bits[2];
+        }
+
+        Map<String, String> parts = new HashMap<String, String>();
+        parts.put("mdschema", schema);
+        parts.put("element", element);
+        if (qualifier != null)
+        {
+            parts.put("qualifier", qualifier);
+        }
+        return parts;
     }
 }
