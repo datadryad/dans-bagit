@@ -281,6 +281,7 @@ public class BagItTest
         assert db.size() > -1;
 
         DIM dsDim = db.getDatasetDIM();
+        assert dsDim != null;
 
         Set<String> idents = db.dataFileIdents();
         assert idents.size() == 1;
@@ -290,6 +291,7 @@ public class BagItTest
         for (String ident : idents)
         {
             DIM dfDim = db.getDatafileDIM(ident);
+            assert dfDim != null;
 
             Set<String> bundles = db.listBundles(ident);
             assert bundles.size() == 1;
@@ -317,7 +319,121 @@ public class BagItTest
                 }
             }
         }
+    }
 
+    @Test
+    public void testReadReal()
+            throws Exception
+    {
+        String workingDir = System.getProperty("user.dir") + "/src/test/resources/working/testreadbag";
+        this.cleanup.add(workingDir);
+
+        String zipPath = System.getProperty("user.dir") + "/src/test/resources/bags/21.zip";
+
+        File f = new File(workingDir);
+        if (!f.exists())
+        {
+            f.mkdirs();
+        }
+
+        DANSBag db = new DANSBag(zipPath, workingDir);
+
+        assert db.getWorkingDir() != null;
+        assert db.getMD5() != null;
+        assert db.getZipPath() != null;
+        assert db.getZipName() != null;
+        assert db.getInputStream() != null;
+        assert db.getSegmentIterator(1000, true) != null;
+        assert db.size() > -1;
+
+        DIM dsDim = db.getDatasetDIM();
+        assert dsDim != null;
+
+        Set<String> idents = db.dataFileIdents();
+        assert idents.size() == 3;
+
+        for (String ident : idents)
+        {
+            DIM dfDim = db.getDatafileDIM(ident);
+            assert dfDim != null;
+
+            Set<String> bundles = db.listBundles(ident);
+            assert bundles.contains("ORIGINAL");
+
+            for (String bundle : bundles)
+            {
+                Set<BaggedBitstream> bbs = db.listBitstreams(ident, bundle);
+                // assert bbs.size() == 1;
+
+                for (BaggedBitstream bb : bbs)
+                {
+                    // assert bb.getDescription() != null;
+                    assert bb.getBundle() != null;
+                    assert bb.getDataFileIdent() != null;
+                    assert bb.getFilename() != null;
+                    assert bb.getFormat() != null;
+
+                    InputStream bbis = bb.getInputStream();
+                    assert bbis != null;
+                }
+            }
+        }
+    }
+
+    @Test
+    public void testDIM()
+            throws Exception
+    {
+        DIM dim = new DIM();
+        dim.addDSpaceField("dc.identifier", "10.whatever/1");
+        dim.addDSpaceField("dc.title", "my title");
+        dim.addDSpaceField("dc.subject", "one");
+        dim.addDSpaceField("dc.subject", "two");
+        dim.addDSpaceField("dc.description.abstract", "abstract");
+        dim.addDSpaceField("dc.description.other", "other");
+
+        String xml = dim.toXML();
+        assert xml != null;
+
+        DIM dim2 = DIM.parse(new ByteArrayInputStream(xml.getBytes()));
+        assert dim2.toXML().equals(xml);
+
+        Set<String> fields = dim2.listDSpaceFields();
+        assert fields.size() == 5;
+        assert fields.contains("dc.identifier");
+        assert fields.contains("dc.title");
+        assert fields.contains("dc.subject");
+        assert fields.contains("dc.description.abstract");
+        assert fields.contains("dc.description.other");
+
+        for (String field : fields)
+        {
+            List<String> values = dim2.getDSpaceFieldValues(field);
+            if (field.equals("dc.identifier"))
+            {
+                assert values.size() == 1;
+                assert values.get(0).equals("10.whatever/1");
+            }
+            if (field.equals("dc.title"))
+            {
+                assert values.size() == 1;
+                assert values.get(0).equals("my title");
+            }
+            if (field.equals("dc.subject"))
+            {
+                assert values.size() == 2;
+            }
+            if (field.equals("dc.description.abstract"))
+            {
+                assert values.size() == 1;
+                assert values.get(0).equals("abstract");
+            }
+            if (field.equals("dc.description.other"))
+            {
+                assert values.size() == 1;
+                assert values.get(0).equals("other");
+            }
+        }
     }
 
     ////////////////////////////////////////////////////////////
