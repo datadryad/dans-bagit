@@ -492,6 +492,9 @@ public class DANSBag
                 // add the filename to the files.xml metadata
                 dfs.addFileMetadata(bfr.payloadPath, "dcterms:title", bfr.filename);
 
+                // add the doi to the files.xml metadata
+                dfs.addFileMetadata(bfr.payloadPath, "dc:identifier", bfr.dataFileIdent);
+
                 // update description tag file contents
                 if (bfr.description != null && !"".equals(bfr.description))
                 {
@@ -556,6 +559,7 @@ public class DANSBag
                 sha1Manifest.add(payload, subDimChecksums.get("sha-1"));
                 dfs.addFileMetadata(payload, "dcterms:title", payload);
                 dfs.addFileMetadata(payload, "dcterms:format", "text/xml");
+                dfs.addFileMetadata(payload, "dc:identifier", ident);
             }
 
             // write the DANS files.xml document
