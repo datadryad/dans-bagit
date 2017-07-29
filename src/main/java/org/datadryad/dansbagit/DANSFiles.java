@@ -21,6 +21,9 @@ public class DANSFiles extends XMLFile
     /** The PREMIS namespace */
     private static String PREMIS_NAMESPACE = "http://www.loc.gov/standards/premis";
 
+    /** DANS Identifier namespace */
+    private static String ID_NAMESPACE = "http://easy.dans.knaw.nl/schemas/vocab/identifier-type/";
+
     /** map of metadata linking file paths, to a set of key/value pairs */
     private Map<String, Map<String, String>> metadata = new HashMap<String, Map<String, String>>();
 
@@ -54,6 +57,7 @@ public class DANSFiles extends XMLFile
         files.addNamespaceDeclaration("dcterms", DCTERMS_NAMESPACE);
         files.addNamespaceDeclaration("dc", DC_NAMESPACE);
         files.addNamespaceDeclaration("premis", PREMIS_NAMESPACE);
+        files.addNamespaceDeclaration("id-type", ID_NAMESPACE);
 
         for (String path : this.metadata.keySet())
         {
