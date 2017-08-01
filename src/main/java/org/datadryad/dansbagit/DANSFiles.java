@@ -21,6 +21,10 @@ public class DANSFiles extends XMLFile
     /** The PREMIS namespace */
     private static String PREMIS_NAMESPACE = "http://www.loc.gov/standards/premis";
 
+    /** DANS Identifier namespaces */
+    private static String ID_NAMESPACE = "http://easy.dans.knaw.nl/schemas/vocab/identifier-type/";
+    private static String XSI_NAMESPACE = "http://www.w3.org/2001/XMLSchema-instance";
+    
     /** map of metadata linking file paths, to a set of key/value pairs */
     private Map<String, Map<String, String>> metadata = new HashMap<String, Map<String, String>>();
 
@@ -54,6 +58,8 @@ public class DANSFiles extends XMLFile
         files.addNamespaceDeclaration("dcterms", DCTERMS_NAMESPACE);
         files.addNamespaceDeclaration("dc", DC_NAMESPACE);
         files.addNamespaceDeclaration("premis", PREMIS_NAMESPACE);
+        files.addNamespaceDeclaration("id-type", ID_NAMESPACE);
+        files.addNamespaceDeclaration("xsi", XSI_NAMESPACE);
 
         for (String path : this.metadata.keySet())
         {
@@ -72,6 +78,11 @@ public class DANSFiles extends XMLFile
                 }
                 Element fieldElement = new Element(field, namespace);
                 fieldElement.appendChild(value);
+                if(field.equals("dcterms:identifier") || field.equals("identifier")) {
+                    Attribute att = new Attribute("type", "id-type:DOI");
+                    att.setNamespace("xsi", XSI_NAMESPACE);
+                    fieldElement.addAttribute(att);
+                }
                 fileEntry.appendChild(fieldElement);
             }
 
