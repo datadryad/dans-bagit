@@ -1,6 +1,7 @@
 package org.datadryad.dansbagit;
 
 import java.io.InputStream;
+import org.apache.log4j.Logger;
 
 public class BaggedBitstream
 {
@@ -11,10 +12,13 @@ public class BaggedBitstream
     private String dataFileIdent;
     private String bundle;
 
+    private static Logger log = Logger.getLogger(BaggedBitstream.class);
+
     public BaggedBitstream(InputStream is, String filename, String format, String description, String dataFileIdent, String bundle)
     {
         this.inputStream = is;
         this.filename = Files.sanitizeFilename(filename);
+        log.debug("sanitized filename to " + this.filename);
         this.format = format;
         this.description = description;
         this.dataFileIdent = dataFileIdent;
@@ -39,6 +43,7 @@ public class BaggedBitstream
     public void setFilename(String filename)
     {
         this.filename = Files.sanitizeFilename(filename);
+        log.debug("sanitized filename to " + this.filename);
     }
 
     public String getFormat()

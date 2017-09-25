@@ -390,6 +390,9 @@ public class DANSBag
     public void addBitstream(InputStream is, String filename, String format, String description, String dataFileIdent, String bundle)
         throws IOException
     {
+        filename = Files.sanitizeFilename(filename);
+        log.debug("sanitized filename to " + filename);
+        
         if (this.bagFile.exists())
         {
             log.error("Attempt to add bitstream when zip already exists");
@@ -882,6 +885,7 @@ public class DANSBag
             payload.append(filename);
         }
         String payloadPath = payload.toString();
+        log.debug("payloadPath " + payloadPath); 
 
         p.put("payload", payloadPath);
 
