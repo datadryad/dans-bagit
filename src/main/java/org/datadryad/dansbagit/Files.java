@@ -18,7 +18,9 @@ public class Files
      * @return the safe string
      */
     public static String sanitizeFilename(String inputName) {
-        return inputName.replaceAll("[^a-zA-Z0-9-_\\.]", "_");
+        inputName = inputName.replaceAll("[^a-zA-Z0-9-_\\.]", "_");
+        inputName = inputName.replaceAll("( )+", " ");
+        return inputName;
     }
 
     /**

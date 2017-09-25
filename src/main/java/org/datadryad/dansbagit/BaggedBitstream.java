@@ -14,7 +14,7 @@ public class BaggedBitstream
     public BaggedBitstream(InputStream is, String filename, String format, String description, String dataFileIdent, String bundle)
     {
         this.inputStream = is;
-        this.filename = filename;
+        this.filename = Files.sanitizeFilename(filename);
         this.format = format;
         this.description = description;
         this.dataFileIdent = dataFileIdent;
@@ -38,7 +38,7 @@ public class BaggedBitstream
 
     public void setFilename(String filename)
     {
-        this.filename = filename;
+        this.filename = Files.sanitizeFilename(filename);
     }
 
     public String getFormat()

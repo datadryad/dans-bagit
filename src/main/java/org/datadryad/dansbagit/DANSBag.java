@@ -400,9 +400,9 @@ public class DANSBag
 
         // escape the dataFileIdent
         Map<String, String> dfPaths = this.paths(true, false, dataFileIdent, null, null);
-        // String dataFilename = Files.sanitizeFilename(dataFileIdent);
-        this.dataFilePaths.put(dfPaths.get("payload"), dataFileIdent);
-        log.debug("Sanitised dataFileIdent, placing " + dataFileIdent + " at " + dfPaths.get("payload"));
+        String dataFilename = Files.sanitizeFilename(dataFileIdent);
+        this.dataFilePaths.put(dfPaths.get("payload"), dataFilename);
+        log.debug("Sanitised dataFileIdent, placing " + dataFilename + " at " + dfPaths.get("payload"));
 
         // get the correct paths to use for the bitstream
         Map<String, String> paths = this.paths(true, false, dataFileIdent, bundle, filename);
