@@ -1,4 +1,5 @@
 package org.datadryad.dansbagit;
+import org.apache.log4j.Logger;
 
 import nu.xom.*;
 
@@ -12,6 +13,8 @@ import java.util.*;
  */
 public class DIM extends XMLFile
 {
+    private static Logger log = Logger.getLogger(DIM.class);
+    
     private static String DIM_NAMESPACE = "http://www.dspace.org/xmlns/dspace/dim";
 
     /**
@@ -71,6 +74,7 @@ public class DIM extends XMLFile
 
     public List<String> getDSpaceFieldValues(String field)
     {
+        log.info("getting field values for: " + field);
         List<String> values = new ArrayList<String>();
         Map<String, String> bits = this.fieldBits(field);
         for (Map<String, String> storedField : this.fields)

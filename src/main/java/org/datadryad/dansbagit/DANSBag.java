@@ -552,9 +552,6 @@ public class DANSBag
             {
                 Map<String, String> paths = this.paths(true, false, ident, null, "metadata.xml");
                 String payload = paths.get("payload");
-                //String dataDir = Files.sanitizeFilename(ident);
-                //String zipPath = "data/" + dataDir + "/metadata.xml";
-
                 DIM dim = this.subDim.get(ident);
                 // Map<String, String> subDimChecksums = this.writeToZip(dim.toXML(), base + "/" + zipPath, out);
                 Map<String, String> subDimChecksums = this.writeToZip(dim.toXML(), paths.get("zip"), out);
@@ -634,10 +631,12 @@ public class DANSBag
             tagmanifest.add(paths.get("payload"), bagitChecksums.get("md5"));
 
             // write the bag-info.txt
-            Date now = new Date();
-            SimpleDateFormat sdf = new SimpleDateFormat("YYYY-MM-dd'T'HH:mm:ss.SSSX");
-            String createdDate = sdf.format(now);
-            String baginfofile = "Created: " + createdDate;
+            String baginfofile = "";
+            List<String> createdDates = dim.getDSpaceFieldValues("dc.date.accessioned");
+            if(createdDates != null && createdDates.size() > 0) {
+                String createdDate = createdDates.get(0);
+                baginfofile = "Created: " + createdDate;
+            }
             paths = this.paths(false, false, null, null, "bag-info.txt");
             Map<String, String> baginfoChecksums = this.writeToZip(baginfofile, paths.get("zip"), out);
             tagmanifest.add(paths.get("payload"), baginfoChecksums.get("md5"));
