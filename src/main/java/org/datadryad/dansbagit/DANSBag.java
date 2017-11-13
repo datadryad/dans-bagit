@@ -635,8 +635,10 @@ public class DANSBag
             List<String> createdDates = dim.getDSpaceFieldValues("dc.date.accessioned");
             if(createdDates != null && createdDates.size() > 0) {
                 String createdDate = createdDates.get(0);
-                baginfofile = "Created: " + createdDate;
+                baginfofile = "Created: " + createdDate + "\n";
             }
+            
+            
             paths = this.paths(false, false, null, null, "bag-info.txt");
             Map<String, String> baginfoChecksums = this.writeToZip(baginfofile, paths.get("zip"), out);
             tagmanifest.add(paths.get("payload"), baginfoChecksums.get("md5"));
