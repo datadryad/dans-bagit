@@ -640,7 +640,7 @@ public class DANSBag
             List<String> origVersions = dim.getDSpaceFieldValues("dc.relation.isversionof");
             if(origVersions != null && origVersions.size() > 0) {
                 String origVersion = origVersions.get(0);
-                baginfofile = baginfofile + "Is-Version-Of: "origVersion + "\n";
+                baginfofile = baginfofile + "Is-Version-Of: " + origVersion + "\n";
             }            
             paths = this.paths(false, false, null, null, "bag-info.txt");
             Map<String, String> baginfoChecksums = this.writeToZip(baginfofile, paths.get("zip"), out);
