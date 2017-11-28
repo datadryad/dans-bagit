@@ -77,6 +77,7 @@ public class DANSBag
         {
             if (this.file == null) {
                 this.file = new File(this.workingPath);
+                this.file.setWritable(true, false);
             }
             return this.file;
         }
@@ -984,7 +985,7 @@ public class DANSBag
         if (this.workingDir.exists())
         {
             log.debug("Cleaning up working directory " + this.workingDir.getAbsolutePath());
-            FileUtils.deleteDirectory(this.workingDir);
+            FileUtils.forceDelete(this.workingDir);
         }
     }
 
