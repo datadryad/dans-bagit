@@ -640,11 +640,16 @@ public class DANSBag
                 String createdDate = createdDates.get(0);
                 baginfofile = "Created: " + createdDate + "\n";
             }
-            List<String> origVersions = dim.getDSpaceFieldValues("dc.relation.isversionof");
-            if(origVersions != null && origVersions.size() > 0) {
-                String origVersion = origVersions.get(0);
-                baginfofile = baginfofile + "Is-Version-Of: " + origVersion + "\n";
-            }            
+	    // If a version of this item has been sent to DANS before,
+	    // either this particular item, OR an earlier Dryad version,
+	    // it will have a DANSidentifier, and we mark this as a new 
+	    // version in the DANS version chain.
+            List<String> dansIDs = dim.getDSpaceFieldValues("dryad.DANSidentifier");
+            if(dansIDs != null && dansIDs.size() > 0) {
+                String dansID = dansIDs.get(0);
+                baginfofile = baginfofile + "Is-Version-Of: " + dansID + "\n";
+	    }
+
             paths = this.paths(false, false, null, null, "bag-info.txt");
             Map<String, String> baginfoChecksums = this.writeToZip(baginfofile, paths.get("zip"), out);
             tagmanifest.add(paths.get("payload"), baginfoChecksums.get("md5"));
