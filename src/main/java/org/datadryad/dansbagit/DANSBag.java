@@ -8,7 +8,6 @@ import java.io.*;
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -633,7 +632,10 @@ public class DANSBag
 
             // write the bag-info.txt
             String baginfofile = "";
-            List<String> createdDates = dim.getDSpaceFieldValues("dc.date.accessioned");
+	    // The Item's lastModified date becomes the bag-info "Created" date, because that is  
+	    // when the current version of the data package's metadata was "created". This number
+	    // must be updated with every edit to the item, because it controls the DANS version chain.
+            List<String> createdDates = dim.getDSpaceFieldValues("dc.date.lastModified");
             if(createdDates != null && createdDates.size() > 0) {
                 String createdDate = createdDates.get(0);
                 baginfofile = "Created: " + createdDate + "\n";
