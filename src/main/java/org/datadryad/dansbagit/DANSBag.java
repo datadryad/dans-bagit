@@ -647,7 +647,7 @@ public class DANSBag
             List<String> dansIDs = dim.getDSpaceFieldValues("dryad.DANSidentifier");
             if(dansIDs != null && dansIDs.size() > 0) {
                 String dansID = dansIDs.get(0);
-                baginfofile = baginfofile + "Is-Version-Of: " + dansID + "\n";
+                baginfofile = baginfofile + "Is-Version-Of: urn:uuid:" + dansID + "\n";
 	    }
 
             paths = this.paths(false, false, null, null, "bag-info.txt");
